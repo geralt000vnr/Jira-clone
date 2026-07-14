@@ -1,7 +1,7 @@
 # Jira-clone
 
 ## Overview
-A Jira-like project management app. Design was locked in 2026-07-14; **backend is scaffolded and verified working** (auth, projects/roles, issues incl. hierarchy + optimistic locking, sprints, comments, attachments, audit trail, real-time sockets). Frontend is still just planned. See PROGRESS.md for exact status.
+A Jira-like project management app. Design was locked in 2026-07-14; **both backend and frontend are scaffolded and verified working end-to-end in a real browser** (signup → create project → create issue → drag/status-change → comment → sprint create, all confirmed live). See PROGRESS.md for exact status.
 
 **Stack:** React + Tailwind + shadcn/ui (frontend, Vite) · Node.js/Express (backend) · MongoDB/Mongoose · JWT auth · Socket.io real-time.
 
@@ -36,10 +36,20 @@ jira-clone/
 │   ├── server.js
 │   ├── package.json
 │   └── .env.example
-└── frontend/                      # not started yet — planned layout below
-    └── src/{api,context,components/{board,issues,projects,analytics,ui},pages,hooks}/
+└── frontend/                      # scaffolded, working (Vite + React 19 + Tailwind v4)
+    └── src/
+        ├── api/                    axiosClient (JWT interceptor) + authApi, projectApi, issueApi, sprintApi, commentApi, attachmentApi
+        ├── context/                AuthContext (session in localStorage), SocketContext (JWT-authed socket.io-client)
+        ├── lib/utils.js            cn() helper (clsx + tailwind-merge), shadcn-style
+        ├── components/
+        │   ├── ui/badge.jsx
+        │   ├── board/              Board, BoardColumn, IssueCard (drag via @hello-pangea/dnd), FilterBar, BacklogPanel
+        │   ├── issues/             IssueModal, IssueForm, CommentThread, CreateIssueModal
+        │   ├── projects/           ProjectList, ProjectMembers
+        │   └── analytics/          BurndownChart (not wired to a page — see gotchas), WorkloadChart
+        ├── hooks/useIssueFilters.js
+        └── pages/                  LoginPage, DashboardPage, ProjectBoardPage, ProjectSettingsPage
 ```
-Full file-by-file spec for the frontend (every component with code, matching the backend routes above) was worked out in a planning session on 2026-07-14 — see PROGRESS.md decisions log for a pointer back to it when frontend work starts.
 
 ## Build, test, run, lint
 **Backend** (from `backend/`):
@@ -50,12 +60,22 @@ Full file-by-file spec for the frontend (every component with code, matching the
 - `npm test` — Jest (no tests written yet)
 - Health check: `GET /health` → `{"success":true}`
 
-**Frontend**: not scaffolded yet.
+**Frontend** (from `frontend/`):
+- `npm install`
+- `cp .env.example .env` and point `VITE_API_URL`/`VITE_SOCKET_URL` at wherever the backend is actually running (see the port-5000 gotcha below — this repo's own dev setup uses 5050)
+- `npm run dev` — Vite, default port 5173 (also usable via the `frontend` config in `.claude/launch.json` for the browser-preview tool)
+- `npm run build` / `npm run lint` (lint is `oxlint`, not eslint)
 
 ## Known gotchas
 - **MongoDB must be a replica set, not standalone.** `issueController.createIssue` uses a multi-document transaction (to atomically bump `Project.issueCounter` and create the `Issue`), and standalone MongoDB rejects transactions with `Transaction numbers are only allowed on a replica set member or mongos`. Don't reach for a plain `mongod` — use `backend/scripts/dev-mongo.sh`, which runs an isolated single-node replica set on port **27018** with its own data dir (`backend/.mongodb-data/`, gitignored), so it doesn't touch any other MongoDB instance on the machine. Point `.env`'s `MONGO_URI` at it with `?replicaSet=rs0` in the query string.
 - **Port 5000 is often taken on macOS** by the AirPlay Receiver (ControlCenter). The default `.env.example` still says `PORT=5000`; if boot fails with `EADDRINUSE`, either disable AirPlay Receiver (System Settings → General → AirDrop & Handoff) or just use a different `PORT` in `.env`.
 - `Organization.ownerId` is **not** `required` in the schema (unlike a first-draft version of this design) — `authController.signup` creates the org before the user exists, then backfills `ownerId` after. Keep it optional or signup breaks.
+- **Issue status changes must go through `PATCH /api/issues/:id/move`, not the general `PATCH /api/issues/:id` update endpoint.** `issueController.updateIssue`'s allowed-fields list is `title/description/priority/assigneeId/dueDate/labels/sprintId` — `status` is deliberately excluded, because status changes need `toPosition`/`fromStatus` for board ordering and activity logging, which only the move endpoint handles. `IssueForm`'s status `<select>` calls a separate `onStatusChange` prop (wired to `issueApi.move` in `IssueModal`), not the general `onSave` prop. If you add another status-changing UI control, wire it the same way.
+- **Sprint dates must be full ISO datetime strings**, not bare `YYYY-MM-DD`. The backend's `createSprintSchema`/`updateSprintSchema` use Zod's `.datetime()`, which rejects a plain date. `BacklogPanel`'s `<input type="date">` values are converted with `new Date(x).toISOString()` before being sent — don't remove that conversion.
+- **Attachment downloads/opens must go through `attachmentApi.openFile()`, not a plain `<a href>`.** `GET /api/attachments/file/:storageKey` requires a JWT (via the `auth` middleware, same as every other route), so a bare anchor tag navigation won't carry the Authorization header and will 401. `openFile()` fetches the URL through `axiosClient` (which does attach the token) as a blob and hands back a local `URL.createObjectURL()` link to open instead.
+- **No user-lookup-by-email endpoint exists.** `ProjectMembers`' "add member" form takes a raw Mongo user id, not an email, despite Jira-like tools normally taking an email — there's nowhere to type a coworker's email and have it resolved. Adding that lookup (`GET /api/users?email=`) is a real gap if this app needs to be usable by non-technical users.
+- **`BurndownChart` exists as a component but isn't wired into any page.** The `Issue` model has no story-points field, so there's no real data source to compute a burndown from yet — building it out would mean adding that field to `Issue` first.
+- The original design spec never included a way to create an Issue from the UI at all (only Projects and Sprints had create forms). `CreateIssueModal` + the "New Issue" button in `ProjectBoardPage` were added during scaffolding to close that gap — it's not in the original planning-conversation spec, so don't be surprised not to find it there.
 
 ## Coding conventions
 - Controllers: every handler is `async (req, res, next) => { try {...} catch (err) { next(err) } }`; errors are thrown as `new ApiError(statusCode, message)` and handled centrally by `middleware/errorHandler.js`.
@@ -64,7 +84,8 @@ Full file-by-file spec for the frontend (every component with code, matching the
 - Route files mount `auth` + `tenantScope` once via `router.use(...)` at the top, then list endpoints.
 - Sprint mutation routes keyed by sprint `id` (`start`/`complete`/`update`/`delete`) use `requireSprintProjectRole`, which stashes the looked-up sprint on `req.sprint` — controllers should read `req.sprint` instead of re-fetching it.
 - Comment/attachment deletion is currently author/uploader-only (no project-admin override), because those routes don't run `requireProjectRole`/`requireSprintProjectRole` and so have no `req.projectRole` to check. Adding an admin override would mean resolving the project role via the issue's `projectId` first.
-- Frontend (planned): API calls centralized in `api/*Api.js` modules (thin wrappers over an `axiosClient` with a request interceptor for the JWT and a response interceptor that redirects to `/login` on 401) — components never call `axios` directly. Board drag-and-drop updates local state immediately, then reconciles with the server response; a `409` from stale `version` triggers a full refetch with a user-facing notice rather than a silent overwrite.
+- Frontend: API calls centralized in `api/*Api.js` modules (thin wrappers over an `axiosClient` with a request interceptor for the JWT and a response interceptor that redirects to `/login` on 401 — guarded to skip that redirect when already on `/login`, so a failed login attempt shows its error instead of bouncing) — components never call `axios` directly. Board drag-and-drop updates local state immediately, then reconciles with the server response; a `409` from stale `version` triggers a full refetch with a user-facing notice rather than a silent overwrite.
+- Frontend uses Tailwind v4 via the `@tailwindcss/vite` plugin (`@import "tailwindcss";` in `index.css`), not a `tailwind.config.js` + PostCSS setup. `components/ui/` holds hand-written shadcn-style primitives (just `badge.jsx` so far) rather than ones generated by the shadcn CLI — add more the same way (small component + `cn()` from `lib/utils.js`) rather than running `npx shadcn init`.
 
 ## Session protocol
 - At the start of every session, read PROGRESS.md before doing anything else.
