@@ -10,8 +10,9 @@ const COLUMNS = [
   { id: 'done', title: 'Done' },
 ];
 
-export default function Board({ projectId, filters = {}, onIssueClick }) {
+export default function Board({ projectId, filters = {}, onIssueClick, members = [] }) {
   const [issuesByStatus, setIssuesByStatus] = useState({ todo: [], in_progress: [], done: [] });
+  const [loading, setLoading] = useState(true);
   const socket = useSocket();
 
   const loadIssues = useCallback(async () => {
@@ -19,6 +20,7 @@ export default function Board({ projectId, filters = {}, onIssueClick }) {
     const grouped = { todo: [], in_progress: [], done: [] };
     issues.forEach((issue) => grouped[issue.status].push(issue));
     setIssuesByStatus(grouped);
+    setLoading(false);
   }, [projectId, JSON.stringify(filters)]);
 
   useEffect(() => {
@@ -70,15 +72,30 @@ export default function Board({ projectId, filters = {}, onIssueClick }) {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex gap-4 p-4 overflow-x-auto">
+        {COLUMNS.map((col) => (
+          <div key={col.id} className="flex-1 min-w-[280px] bg-slate-50/70 rounded-xl p-3 space-y-2">
+            <div className="h-4 w-20 rounded bg-slate-200 animate-pulse mb-3" />
+            <div className="h-20 rounded-lg bg-slate-100 animate-pulse" />
+            <div className="h-20 rounded-lg bg-slate-100 animate-pulse" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 p-4 overflow-x-auto">
+      <div className="flex gap-4 p-4 overflow-x-auto animate-fade-in">
         {COLUMNS.map((col) => (
           <BoardColumn
             key={col.id}
             column={col}
             issues={issuesByStatus[col.id]}
             onIssueClick={onIssueClick}
+            members={members}
           />
         ))}
       </div>

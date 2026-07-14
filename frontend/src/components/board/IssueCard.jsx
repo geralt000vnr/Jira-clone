@@ -1,15 +1,29 @@
 import { Draggable } from '@hello-pangea/dnd';
+import { ChevronsUp, ChevronUp, Equal, ChevronDown, ChevronsDown, Bug, BookOpen, CheckSquare, Layers, ListTodo } from 'lucide-react';
 import { Badge } from '../ui/badge';
+import { getInitials } from '../../lib/utils';
 
-const PRIORITY_COLORS = {
-  highest: 'bg-red-100 text-red-700',
-  high: 'bg-orange-100 text-orange-700',
-  medium: 'bg-yellow-100 text-yellow-700',
-  low: 'bg-blue-100 text-blue-700',
-  lowest: 'bg-slate-100 text-slate-600',
+const PRIORITY_STYLES = {
+  highest: { className: 'bg-red-50 text-red-600', Icon: ChevronsUp },
+  high: { className: 'bg-orange-50 text-orange-600', Icon: ChevronUp },
+  medium: { className: 'bg-yellow-50 text-yellow-700', Icon: Equal },
+  low: { className: 'bg-blue-50 text-blue-600', Icon: ChevronDown },
+  lowest: { className: 'bg-slate-100 text-slate-500', Icon: ChevronsDown },
 };
 
-export default function IssueCard({ issue, index, onIssueClick }) {
+const TYPE_ICONS = {
+  bug: { Icon: Bug, className: 'text-red-500' },
+  story: { Icon: BookOpen, className: 'text-emerald-500' },
+  task: { Icon: CheckSquare, className: 'text-blue-500' },
+  epic: { Icon: Layers, className: 'text-violet-500' },
+  subtask: { Icon: ListTodo, className: 'text-slate-400' },
+};
+
+export default function IssueCard({ issue, index, onIssueClick, members = [] }) {
+  const priority = PRIORITY_STYLES[issue.priority] || PRIORITY_STYLES.medium;
+  const type = TYPE_ICONS[issue.type] || TYPE_ICONS.task;
+  const assignee = members.find((m) => m.userId?._id === issue.assigneeId)?.userId;
+
   return (
     <Draggable draggableId={issue._id} index={index}>
       {(provided, snapshot) => (
@@ -18,17 +32,30 @@ export default function IssueCard({ issue, index, onIssueClick }) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={() => onIssueClick?.(issue._id)}
-          className={`bg-white rounded-md shadow-sm border p-3 cursor-grab ${
-            snapshot.isDragging ? 'shadow-lg rotate-1' : ''
-          }`}
+          className={`bg-white rounded-lg border border-slate-200 p-3 cursor-grab active:cursor-grabbing
+            transition-all duration-150 ease-out
+            ${
+              snapshot.isDragging
+                ? 'shadow-lg rotate-2 scale-[1.03] border-indigo-300'
+                : 'shadow-sm hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5'
+            }`}
         >
-          <div className="text-xs text-slate-400 mb-1">{issue.key}</div>
-          <div className="text-sm font-medium mb-2">{issue.title}</div>
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1.5">
+            <type.Icon className={`size-3.5 ${type.className}`} />
+            {issue.key}
+          </div>
+          <div className="text-sm font-medium text-slate-800 mb-2.5 leading-snug">{issue.title}</div>
           <div className="flex items-center justify-between">
-            <Badge className={PRIORITY_COLORS[issue.priority]}>{issue.priority}</Badge>
-            {issue.assigneeId && (
-              <div className="w-6 h-6 rounded-full bg-indigo-500 text-white text-xs flex items-center justify-center">
-                {issue.assigneeInitials || '?'}
+            <Badge className={`gap-0.5 ${priority.className}`}>
+              <priority.Icon className="size-3" />
+              {issue.priority}
+            </Badge>
+            {assignee && (
+              <div
+                title={assignee.name}
+                className="w-6 h-6 rounded-full bg-indigo-500 text-white text-[10px] font-medium flex items-center justify-center ring-2 ring-white shadow-sm"
+              >
+                {getInitials(assignee.name)}
               </div>
             )}
           </div>
