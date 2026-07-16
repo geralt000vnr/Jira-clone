@@ -20,3 +20,23 @@ export function getInitials(name = '') {
     .map((part) => part[0]?.toUpperCase())
     .join('') || '?';
 }
+
+// WorkflowStatus.color -> Tailwind classes. Kept as static literals (not template strings) so
+// Tailwind's build-time class scanner actually generates these.
+export const STATUS_DOT_CLASS = {
+  slate: 'bg-slate-400',
+  blue: 'bg-blue-500',
+  emerald: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  violet: 'bg-violet-500',
+  rose: 'bg-rose-500',
+};
+
+export const STATUS_BADGE_CLASS = {
+  slate: 'bg-slate-100 text-slate-600',
+  blue: 'bg-blue-100 text-blue-700',
+  emerald: 'bg-emerald-100 text-emerald-700',
+  amber: 'bg-amber-100 text-amber-700',
+  violet: 'bg-violet-100 text-violet-700',
+  rose: 'bg-rose-100 text-rose-700',
+};

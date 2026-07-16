@@ -2,13 +2,13 @@ import { useState, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { cn, fieldClass } from '../../lib/utils';
 
-const STATUSES = ['todo', 'in_progress', 'done'];
 const PRIORITIES = ['lowest', 'low', 'medium', 'high', 'highest'];
 const selectClass = cn('px-2 py-1.5 text-sm cursor-pointer', fieldClass);
 
-export default function IssueForm({ issue, onSave, onStatusChange }) {
+export default function IssueForm({ issue, onSave, onStatusChange, statuses = [] }) {
   const [title, setTitle] = useState(issue.title);
   const [description, setDescription] = useState(issue.description);
+  const [storyPoints, setStoryPoints] = useState(issue.storyPoints ?? '');
   const [saved, setSaved] = useState(false);
   const savedTimeout = useRef(null);
 
@@ -50,15 +50,15 @@ export default function IssueForm({ issue, onSave, onStatusChange }) {
         placeholder="Add a description..."
       />
 
-      <div className="flex gap-4 text-sm">
+      <div className="flex gap-4 text-sm flex-wrap">
         <label className="flex flex-col gap-1 text-slate-500">
           Status
           {/* Status changes go through the move endpoint, not the general update endpoint
-              (the backend's updateIssue only accepts title/description/priority/assigneeId/dueDate/labels/sprintId) */}
-          <select value={issue.status} onChange={(e) => onStatusChange(e.target.value)} className={selectClass}>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
+              (the backend's updateIssue only accepts title/description/priority/assigneeId/dueDate/labels/sprintId/storyPoints/originalEstimateSeconds) */}
+          <select value={issue.statusId} onChange={(e) => onStatusChange(e.target.value)} className={selectClass}>
+            {statuses.map((s) => (
+              <option key={s._id} value={s._id}>
+                {s.name}
               </option>
             ))}
           </select>
@@ -77,6 +77,23 @@ export default function IssueForm({ issue, onSave, onStatusChange }) {
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="flex flex-col gap-1 text-slate-500">
+          Story points
+          <input
+            type="number"
+            min="0"
+            max="999"
+            value={storyPoints}
+            onChange={(e) => setStoryPoints(e.target.value)}
+            onBlur={() => {
+              const value = storyPoints === '' ? null : Number(storyPoints);
+              saveIfChanged('storyPoints', value, issue.storyPoints ?? null);
+            }}
+            placeholder="—"
+            className={cn('px-2 py-1.5 text-sm w-16', fieldClass)}
+          />
         </label>
 
         <label className="flex flex-col gap-1 text-slate-500">

@@ -1,28 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Play, CheckCircle2, ArrowRightCircle, Rocket, Inbox, CalendarDays } from 'lucide-react';
+import { Play, CheckCircle2, ArrowRightCircle, Rocket, Inbox, CalendarDays, Trash2, X } from 'lucide-react';
 import { sprintApi } from '../../api/sprintApi';
 import { issueApi } from '../../api/issueApi';
+import { workflowStatusApi } from '../../api/workflowStatusApi';
+import { projectApi } from '../../api/projectApi';
 import { Button } from '../ui/button';
-import { cn, fieldClass } from '../../lib/utils';
-
-const STATUS_DOT = {
-  todo: 'bg-slate-400',
-  in_progress: 'bg-blue-500',
-  done: 'bg-emerald-500',
-};
+import { cn, fieldClass, STATUS_DOT_CLASS } from '../../lib/utils';
 
 export default function BacklogPanel({ projectId }) {
   const [sprints, setSprints] = useState([]);
   const [activeSprint, setActiveSprint] = useState(null);
   const [activeSprintIssues, setActiveSprintIssues] = useState([]);
   const [backlogIssues, setBacklogIssues] = useState([]);
+  const [statuses, setStatuses] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [selected, setSelected] = useState(new Set());
   const [newSprint, setNewSprint] = useState({ name: '', startDate: '', endDate: '' });
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const statusById = Object.fromEntries(statuses.map((s) => [s._id, s]));
 
   const load = useCallback(async () => {
-    const all = await sprintApi.list(projectId);
+    const [all, statusList, memberList] = await Promise.all([
+      sprintApi.list(projectId),
+      workflowStatusApi.list(projectId),
+      projectApi.listMembers(projectId),
+    ]);
     setSprints(all);
+    setStatuses(statusList);
+    setMembers(memberList.filter((m) => m.userId));
     const active = all.find((s) => s.status === 'active');
     setActiveSprint(active || null);
 
@@ -36,6 +44,7 @@ export default function BacklogPanel({ projectId }) {
     // backlog = issues in this project with no sprint assigned
     const all_issues = await issueApi.list({ projectId });
     setBacklogIssues(all_issues.filter((i) => !i.sprintId));
+    setSelected(new Set());
   }, [projectId]);
 
   useEffect(() => {
@@ -83,6 +92,39 @@ export default function BacklogPanel({ projectId }) {
     load();
   };
 
+  const toggleSelected = (issueId) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(issueId) ? next.delete(issueId) : next.add(issueId);
+      return next;
+    });
+  };
+
+  const selectedItems = () =>
+    backlogIssues.filter((i) => selected.has(i._id)).map((i) => ({ issueId: i._id, expectedVersion: i.version }));
+
+  const handleBulkUpdate = async (updates) => {
+    setBulkBusy(true);
+    try {
+      const { failed } = await issueApi.bulkUpdate(selectedItems(), updates);
+      if (failed.length > 0) alert(`${failed.length} issue(s) couldn't be updated (they may have changed elsewhere).`);
+      load();
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selected.size} issue(s)? This cannot be undone.`)) return;
+    setBulkBusy(true);
+    try {
+      await issueApi.bulkRemove([...selected]);
+      load();
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   const plannedSprints = sprints.filter((s) => s.status === 'planned');
 
   return (
@@ -110,9 +152,9 @@ export default function BacklogPanel({ projectId }) {
                   <span className="text-slate-400 mr-1.5">{i.key}</span>
                   {i.title}
                 </span>
-                <span className="text-xs text-slate-400 capitalize flex items-center gap-1.5">
-                  <span className={cn('size-1.5 rounded-full', STATUS_DOT[i.status])} />
-                  {i.status.replace('_', ' ')}
+                <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                  <span className={cn('size-1.5 rounded-full', STATUS_DOT_CLASS[statusById[i.statusId]?.color] || STATUS_DOT_CLASS.slate)} />
+                  {statusById[i.statusId]?.name || 'Unknown'}
                 </span>
               </li>
             ))}
@@ -128,20 +170,79 @@ export default function BacklogPanel({ projectId }) {
       )}
 
       <section>
-        <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-800">
-          <Inbox className="size-4 text-slate-400" />
-          Backlog
-        </h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold flex items-center gap-2 text-slate-800">
+            <Inbox className="size-4 text-slate-400" />
+            Backlog
+          </h3>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-2 text-xs animate-slide-down">
+              <span className="text-slate-500">{selected.size} selected</span>
+              <select
+                disabled={bulkBusy}
+                defaultValue=""
+                onChange={(e) => e.target.value && handleBulkUpdate({ statusId: e.target.value })}
+                className={cn('px-2 py-1 text-xs cursor-pointer', fieldClass)}
+              >
+                <option value="" disabled>
+                  Move to...
+                </option>
+                {statuses.map((s) => (
+                  <option key={s._id} value={s._id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                disabled={bulkBusy}
+                defaultValue=""
+                onChange={(e) => e.target.value && handleBulkUpdate({ assigneeId: e.target.value })}
+                className={cn('px-2 py-1 text-xs cursor-pointer', fieldClass)}
+              >
+                <option value="" disabled>
+                  Assign to...
+                </option>
+                {members.map((m) => (
+                  <option key={m.userId._id} value={m.userId._id}>
+                    {m.userId.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkBusy}
+                className="flex items-center gap-1 text-red-500 hover:text-red-600 px-2 py-1"
+              >
+                <Trash2 className="size-3.5" />
+                Delete
+              </button>
+              <button onClick={() => setSelected(new Set())} className="text-slate-400 hover:text-slate-700 p-1">
+                <X className="size-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
         <ul className="divide-y divide-slate-100 border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
           {backlogIssues.map((i) => (
             <li
               key={i._id}
-              className="px-4 py-2.5 text-sm flex justify-between items-center hover:bg-slate-50 transition-colors group"
+              className={cn(
+                'px-4 py-2.5 text-sm flex justify-between items-center hover:bg-slate-50 transition-colors group',
+                selected.has(i._id) && 'bg-indigo-50/60'
+              )}
             >
-              <span className="text-slate-700">
-                <span className="text-slate-400 mr-1.5">{i.key}</span>
-                {i.title}
-              </span>
+              <label className="flex items-center gap-3 text-slate-700 cursor-pointer flex-1">
+                <input
+                  type="checkbox"
+                  checked={selected.has(i._id)}
+                  onChange={() => toggleSelected(i._id)}
+                  className="cursor-pointer"
+                />
+                <span>
+                  <span className="text-slate-400 mr-1.5">{i.key}</span>
+                  {i.title}
+                </span>
+              </label>
               <button
                 onClick={() => handleAddToSprint(i._id)}
                 className="flex items-center gap-1 text-xs text-indigo-600 opacity-0 group-hover:opacity-100 hover:underline transition-opacity duration-150"

@@ -1,6 +1,13 @@
 const Project = require('../models/Project');
 const ProjectMember = require('../models/ProjectMember');
+const WorkflowStatus = require('../models/WorkflowStatus');
 const ApiError = require('../utils/ApiError');
+
+const DEFAULT_STATUSES = [
+  { name: 'To Do', category: 'todo', color: 'slate', order: 0 },
+  { name: 'In Progress', category: 'in_progress', color: 'blue', order: 1 },
+  { name: 'Done', category: 'done', color: 'emerald', order: 2 },
+];
 
 // POST /api/projects
 exports.createProject = async (req, res, next) => {
@@ -22,6 +29,11 @@ exports.createProject = async (req, res, next) => {
       userId: req.user.id,
       role: 'admin',
     });
+
+    // every project starts with a default 3-column workflow (customizable afterward)
+    await WorkflowStatus.insertMany(
+      DEFAULT_STATUSES.map((s) => ({ ...s, organizationId: req.user.organizationId, projectId: project._id }))
+    );
 
     res.status(201).json({ success: true, project });
   } catch (err) {

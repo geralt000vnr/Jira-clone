@@ -1,24 +1,18 @@
 import { Droppable } from '@hello-pangea/dnd';
 import IssueCard from './IssueCard';
-import { cn } from '../../lib/utils';
+import { cn, STATUS_DOT_CLASS } from '../../lib/utils';
 
-const DOT_COLORS = {
-  todo: 'bg-slate-400',
-  in_progress: 'bg-blue-500',
-  done: 'bg-emerald-500',
-};
-
-export default function BoardColumn({ column, issues, onIssueClick, members }) {
+export default function BoardColumn({ status, issues, onIssueClick, members }) {
   return (
     <div className="flex-1 min-w-[280px] bg-slate-50/70 rounded-xl p-3">
       <h3 className="font-semibold text-sm text-slate-600 mb-3 flex items-center gap-2 px-1">
-        <span className={cn('size-2 rounded-full', DOT_COLORS[column.id])} />
-        {column.title}
+        <span className={cn('size-2 rounded-full', STATUS_DOT_CLASS[status.color] || STATUS_DOT_CLASS.slate)} />
+        {status.name}
         <span className="ml-auto text-xs text-slate-500 bg-slate-200/80 rounded-full px-2 py-0.5 min-w-[1.5rem] text-center">
           {issues.length}
         </span>
       </h3>
-      <Droppable droppableId={column.id}>
+      <Droppable droppableId={status._id}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}

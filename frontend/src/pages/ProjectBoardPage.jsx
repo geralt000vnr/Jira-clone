@@ -7,8 +7,10 @@ import BacklogPanel from '../components/board/BacklogPanel';
 import IssueModal from '../components/issues/IssueModal';
 import CreateIssueModal from '../components/issues/CreateIssueModal';
 import WorkloadChart from '../components/analytics/WorkloadChart';
+import BurndownPanel from '../components/analytics/BurndownPanel';
 import useIssueFilters from '../hooks/useIssueFilters';
 import { projectApi } from '../api/projectApi';
+import { workflowStatusApi } from '../api/workflowStatusApi';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 
@@ -25,10 +27,12 @@ export default function ProjectBoardPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [members, setMembers] = useState([]);
+  const [statuses, setStatuses] = useState([]);
   const filtersState = useIssueFilters();
 
   useEffect(() => {
     projectApi.listMembers(projectId).then(setMembers);
+    workflowStatusApi.list(projectId).then(setStatuses);
   }, [projectId]);
 
   const handleCloseModal = (shouldRefresh) => {
@@ -75,7 +79,7 @@ export default function ProjectBoardPage() {
       {tab === 'board' && (
         <div className="animate-fade-in">
           <div className="flex items-center justify-between px-4 pt-4 gap-3">
-            <FilterBar filtersState={filtersState} members={members} />
+            <FilterBar filtersState={filtersState} members={members} statuses={statuses} projectId={projectId} />
             <Button onClick={() => setShowCreate(true)} className="whitespace-nowrap">
               <Plus className="size-4" />
               New Issue
@@ -87,6 +91,7 @@ export default function ProjectBoardPage() {
             filters={filtersState.filters}
             onIssueClick={setOpenIssueId}
             members={members}
+            statuses={statuses}
           />
         </div>
       )}
@@ -94,12 +99,13 @@ export default function ProjectBoardPage() {
       {tab === 'backlog' && <BacklogPanel projectId={projectId} />}
 
       {tab === 'analytics' && (
-        <div className="p-4 animate-fade-in">
+        <div className="p-4 animate-fade-in space-y-4">
+          <BurndownPanel projectId={projectId} />
           <WorkloadChart projectId={projectId} />
         </div>
       )}
 
-      {openIssueId && <IssueModal issueId={openIssueId} onClose={handleCloseModal} />}
+      {openIssueId && <IssueModal issueId={openIssueId} onClose={handleCloseModal} statuses={statuses} />}
       {showCreate && (
         <CreateIssueModal
           projectId={projectId}

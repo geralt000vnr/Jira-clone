@@ -10,4 +10,5 @@ export const sprintApi = {
   remove: (id) => axiosClient.delete(`/sprints/${id}`).then((r) => r.data),
   addIssue: (sprintId, issueId) =>
     axiosClient.post(`/sprints/${sprintId}/issues`, { issueId }).then((r) => r.data.issue),
+  burndown: (id) => axiosClient.get(`/sprints/${id}/burndown`).then((r) => r.data), // { data, totalPoints }
 };

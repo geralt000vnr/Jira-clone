@@ -2,20 +2,28 @@ import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { issueApi } from '../../api/issueApi';
 import { projectApi } from '../../api/projectApi';
+import { workflowStatusApi } from '../../api/workflowStatusApi';
 
 export default function WorkloadChart({ projectId }) {
   const [data, setData] = useState([]);
 
   useEffect(() => {
     (async () => {
-      const [issues, members] = await Promise.all([issueApi.list({ projectId }), projectApi.listMembers(projectId)]);
+      const [issues, members, statuses] = await Promise.all([
+        issueApi.list({ projectId }),
+        projectApi.listMembers(projectId),
+        workflowStatusApi.list(projectId),
+      ]);
+      const doneStatusIds = new Set(statuses.filter((s) => s.category === 'done').map((s) => s._id));
 
       const counts = members
         .filter((m) => m.userId)
         .map((m) => ({
           name: m.userId.name,
-          open: issues.filter((i) => String(i.assigneeId) === String(m.userId._id) && i.status !== 'done').length,
-          done: issues.filter((i) => String(i.assigneeId) === String(m.userId._id) && i.status === 'done').length,
+          open: issues.filter((i) => String(i.assigneeId) === String(m.userId._id) && !doneStatusIds.has(i.statusId))
+            .length,
+          done: issues.filter((i) => String(i.assigneeId) === String(m.userId._id) && doneStatusIds.has(i.statusId))
+            .length,
         }));
 
       setData(counts);

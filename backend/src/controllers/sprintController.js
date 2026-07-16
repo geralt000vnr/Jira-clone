@@ -1,5 +1,7 @@
 const Sprint = require('../models/Sprint');
 const Issue = require('../models/Issue');
+const WorkflowStatus = require('../models/WorkflowStatus');
+const IssueActivity = require('../models/IssueActivity');
 const ApiError = require('../utils/ApiError');
 
 // POST /api/sprints
@@ -87,8 +89,11 @@ exports.completeSprint = async (req, res, next) => {
     if (!sprint) throw new ApiError(404, 'Sprint not found');
     if (sprint.status !== 'active') throw new ApiError(409, 'Only an active sprint can be completed');
 
+    const doneStatuses = await WorkflowStatus.find({ projectId: sprint.projectId, category: 'done' }).select('_id');
+    const doneStatusIds = doneStatuses.map((s) => s._id);
+
     await Issue.updateMany(
-      req.scope({ sprintId: sprint._id, status: { $ne: 'done' } }),
+      req.scope({ sprintId: sprint._id, statusId: { $nin: doneStatusIds } }),
       { $set: { sprintId: null }, $inc: { version: 1 } }
     );
 
@@ -110,6 +115,65 @@ exports.deleteSprint = async (req, res, next) => {
     await Issue.updateMany(req.scope({ sprintId: sprint._id }), { $set: { sprintId: null } });
     await sprint.deleteOne();
     res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/sprints/:id/burndown
+// Ideal line: linear decline from total story points at sprint start to 0 at sprint end.
+// Actual line: for each day, total story points still remaining given when each issue first
+// reached a 'done'-category status (derived from the existing IssueActivity audit trail —
+// no separate tracking needed). Issues with no story points don't affect the totals.
+exports.getSprintBurndown = async (req, res, next) => {
+  try {
+    const sprint = req.sprint || (await Sprint.findOne({ _id: req.params.id, organizationId: req.user.organizationId }));
+    if (!sprint) throw new ApiError(404, 'Sprint not found');
+
+    const issues = await Issue.find(req.scope({ sprintId: sprint._id }));
+    const totalPoints = issues.reduce((sum, i) => sum + (i.storyPoints || 0), 0);
+
+    const doneStatuses = await WorkflowStatus.find({ projectId: sprint.projectId, category: 'done' }).select('name');
+    const doneNames = new Set(doneStatuses.map((s) => s.name));
+
+    const issueIds = issues.filter((i) => i.storyPoints).map((i) => i._id);
+    const activities = await IssueActivity.find({ issueId: { $in: issueIds }, field: 'status' }).sort({
+      createdAt: 1,
+    });
+
+    // first time each issue's status activity landed on a 'done'-category status name
+    const completedAt = {};
+    for (const a of activities) {
+      const key = String(a.issueId);
+      if (!completedAt[key] && doneNames.has(a.toValue)) completedAt[key] = a.createdAt;
+    }
+
+    const start = new Date(sprint.startDate);
+    const end = new Date(sprint.endDate);
+    const dayMs = 24 * 60 * 60 * 1000;
+    const totalDays = Math.max(1, Math.round((end - start) / dayMs));
+    const now = new Date();
+
+    const data = [];
+    for (let d = 0; d <= totalDays; d++) {
+      const dayDate = new Date(start.getTime() + d * dayMs); // start of this day, for the "is this day in the future" check
+      const dayEnd = new Date(dayDate.getTime() + dayMs); // end of this day — completions any time during the day count
+      const ideal = Math.max(0, totalPoints - (totalPoints * d) / totalDays);
+
+      let doneByDay = 0;
+      for (const issue of issues) {
+        const completed = completedAt[String(issue._id)];
+        if (completed && completed < dayEnd) doneByDay += issue.storyPoints || 0;
+      }
+
+      data.push({
+        day: `Day ${d + 1}`,
+        ideal: Math.round(ideal * 10) / 10,
+        actual: dayDate <= now ? Math.max(0, totalPoints - doneByDay) : null,
+      });
+    }
+
+    res.json({ success: true, data, totalPoints });
   } catch (err) {
     next(err);
   }

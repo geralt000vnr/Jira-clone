@@ -1,5 +1,5 @@
 const { z } = require('zod');
-const { ISSUE_TYPES, STATUSES, PRIORITIES } = require('../models/Issue');
+const { ISSUE_TYPES, PRIORITIES } = require('../models/Issue');
 
 exports.createIssueSchema = z.object({
   projectId: z.string().min(1),
@@ -11,6 +11,7 @@ exports.createIssueSchema = z.object({
   dueDate: z.string().datetime().nullable().optional(),
   labels: z.array(z.string().trim().max(40)).max(20).optional().default([]),
   parentId: z.string().nullable().optional(),
+  storyPoints: z.number().min(0).max(999).nullable().optional(),
 });
 
 exports.updateIssueSchema = z.object({
@@ -22,11 +23,13 @@ exports.updateIssueSchema = z.object({
   dueDate: z.string().datetime().nullable().optional(),
   labels: z.array(z.string().trim().max(40)).max(20).optional(),
   sprintId: z.string().nullable().optional(),
+  storyPoints: z.number().min(0).max(999).nullable().optional(),
+  originalEstimateSeconds: z.number().min(0).nullable().optional(),
 });
 
 exports.moveIssueSchema = z.object({
-  toStatus: z.enum(STATUSES),
+  toStatusId: z.string().min(1),
   toPosition: z.number().int().nonnegative(),
-  fromStatus: z.enum(STATUSES).optional(),
+  fromStatusId: z.string().min(1).optional(),
   expectedVersion: z.number().int().nonnegative(),
 });

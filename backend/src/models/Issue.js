@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const ISSUE_TYPES = ['epic', 'story', 'task', 'bug', 'subtask'];
-const STATUSES = ['todo', 'in_progress', 'done'];
 const PRIORITIES = ['lowest', 'low', 'medium', 'high', 'highest'];
 
 const issueSchema = new mongoose.Schema(
@@ -16,7 +15,7 @@ const issueSchema = new mongoose.Schema(
 
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '' },
-    status: { type: String, enum: STATUSES, default: 'todo', index: true },
+    statusId: { type: mongoose.Schema.Types.ObjectId, ref: 'WorkflowStatus', required: true, index: true },
     priority: { type: String, enum: PRIORITIES, default: 'medium' },
 
     assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
@@ -27,6 +26,12 @@ const issueSchema = new mongoose.Schema(
     // board column ordering
     boardPosition: { type: Number, default: 0 },
 
+    // estimation / time tracking
+    storyPoints: { type: Number, default: null, min: 0 },
+    originalEstimateSeconds: { type: Number, default: null, min: 0 },
+    remainingEstimateSeconds: { type: Number, default: null, min: 0 },
+    loggedSeconds: { type: Number, default: 0, min: 0 },
+
     // optimistic locking for concurrent drag-and-drop / edits
     version: { type: Number, default: 0 },
 
@@ -36,7 +41,7 @@ const issueSchema = new mongoose.Schema(
 );
 
 issueSchema.index({ title: 'text', description: 'text' });
-issueSchema.index({ projectId: 1, status: 1 });
+issueSchema.index({ projectId: 1, statusId: 1 });
 
 // Prevent subtasks from having children of their own
 issueSchema.pre('save', async function (next) {
@@ -52,5 +57,4 @@ issueSchema.pre('save', async function (next) {
 
 module.exports = mongoose.model('Issue', issueSchema);
 module.exports.ISSUE_TYPES = ISSUE_TYPES;
-module.exports.STATUSES = STATUSES;
 module.exports.PRIORITIES = PRIORITIES;

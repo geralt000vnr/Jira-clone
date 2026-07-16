@@ -22,5 +22,6 @@ router.delete('/:id', requireSprintProjectRole(['admin', 'manager']), sprintCont
 router.post('/:id/start', requireSprintProjectRole(['admin', 'manager']), sprintController.startSprint);
 router.post('/:id/complete', requireSprintProjectRole(['admin', 'manager']), sprintController.completeSprint);
 router.post('/:id/issues', validate(addIssueToSprintSchema), sprintController.addIssueToSprint);
+router.get('/:id/burndown', sprintController.getSprintBurndown);
 
 module.exports = router;
