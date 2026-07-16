@@ -8,8 +8,8 @@ export function cn(...inputs) {
 // Shared field styling so every text input/select/textarea in the app looks and
 // behaves the same (focus ring, transition, hover) without a full Input component.
 export const fieldClass =
-  'border border-slate-200 rounded-lg bg-white transition-colors duration-150 ' +
-  'placeholder:text-slate-400 hover:border-slate-300 ' +
+  'border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-150 ' +
+  'placeholder:text-slate-400 dark:placeholder:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600 ' +
   'focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400';
 
 export function getInitials(name = '') {
@@ -33,7 +33,7 @@ export const STATUS_DOT_CLASS = {
 };
 
 export const STATUS_BADGE_CLASS = {
-  slate: 'bg-slate-100 text-slate-600',
+  slate: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
   blue: 'bg-blue-100 text-blue-700',
   emerald: 'bg-emerald-100 text-emerald-700',
   amber: 'bg-amber-100 text-amber-700',

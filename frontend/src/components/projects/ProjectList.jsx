@@ -56,7 +56,7 @@ export default function ProjectList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-semibold text-slate-900">Your Projects</h2>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Your Projects</h2>
         <Button variant={showForm ? 'secondary' : 'primary'} onClick={() => setShowForm((s) => !s)}>
           {!showForm && <Plus className="size-4" />}
           {showForm ? 'Cancel' : 'New Project'}
@@ -66,7 +66,7 @@ export default function ProjectList() {
       {showForm && (
         <form
           onSubmit={handleCreate}
-          className="bg-white border border-slate-200 rounded-xl p-5 mb-5 space-y-3 max-w-md shadow-sm animate-slide-down"
+          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-5 space-y-3 max-w-md shadow-sm animate-slide-down"
         >
           <input
             placeholder="Project name"
@@ -101,7 +101,7 @@ export default function ProjectList() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-28 rounded-xl bg-slate-100 animate-pulse" />
+            <div key={i} className="h-28 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
           ))}
         </div>
       ) : (
@@ -111,22 +111,22 @@ export default function ProjectList() {
               key={p._id}
               onClick={() => navigate(`/projects/${p._id}/board`)}
               style={{ animationDelay: `${i * 30}ms` }}
-              className="group relative overflow-hidden border border-slate-200 rounded-xl p-4 bg-white cursor-pointer
-                shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300
+              className="group relative overflow-hidden border border-slate-200 dark:border-slate-700 rounded-xl p-4 bg-white dark:bg-slate-900 cursor-pointer
+                shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300 dark:hover:border-slate-600
                 transition-all duration-200 animate-slide-up"
             >
               <div className={cn('absolute top-0 left-0 h-1 w-full', accentFor(p.key))} />
               <div className="flex items-start justify-between">
-                <div className="text-xs font-medium tracking-wide text-slate-400 mb-1">{p.key}</div>
-                <ArrowRight className="size-4 text-slate-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 -translate-x-1 transition-all duration-200" />
+                <div className="text-xs font-medium tracking-wide text-slate-400 dark:text-slate-500 mb-1">{p.key}</div>
+                <ArrowRight className="size-4 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 -translate-x-1 transition-all duration-200" />
               </div>
-              <div className="font-medium text-slate-900 mb-1">{p.name}</div>
-              <p className="text-sm text-slate-500 line-clamp-2">{p.description || 'No description'}</p>
+              <div className="font-medium text-slate-900 dark:text-slate-100 mb-1">{p.name}</div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">{p.description || 'No description'}</p>
             </div>
           ))}
           {projects.length === 0 && !showForm && (
-            <div className="col-span-full flex flex-col items-center justify-center text-center py-16 text-slate-400 border border-dashed border-slate-200 rounded-xl">
-              <FolderKanban className="size-8 mb-2 text-slate-300" />
+            <div className="col-span-full flex flex-col items-center justify-center text-center py-16 text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+              <FolderKanban className="size-8 mb-2 text-slate-300 dark:text-slate-600" />
               <p className="text-sm">No projects yet — create your first one.</p>
             </div>
           )}

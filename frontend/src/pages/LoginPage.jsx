@@ -34,23 +34,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 px-4">
       <div className="w-full max-w-sm animate-slide-up">
         <div className="flex flex-col items-center mb-6">
           <div className="size-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm shadow-indigo-200">
             <KanbanSquare className="size-6" />
           </div>
-          <h1 className="text-lg font-semibold mt-3 text-slate-900">
+          <h1 className="text-lg font-semibold mt-3 text-slate-900 dark:text-slate-100">
             {mode === 'login' ? 'Welcome back' : 'Create your workspace'}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {mode === 'login' ? 'Log in to continue to Jira Clone' : 'Set up your organization to get started'}
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm shadow-slate-200/60 space-y-3"
+          className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm shadow-slate-200/60 dark:shadow-slate-950/40 space-y-3"
         >
           {mode === 'signup' && (
             <input
@@ -88,7 +88,7 @@ export default function LoginPage() {
           />
 
           {error && (
-            <p className="flex items-start gap-1.5 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 animate-slide-down">
+            <p className="flex items-start gap-1.5 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 border border-red-100 dark:border-red-900 rounded-lg px-3 py-2 animate-slide-down">
               <AlertCircle className="size-4 shrink-0 mt-0.5" />
               {error}
             </p>
@@ -98,7 +98,7 @@ export default function LoginPage() {
             {loading ? 'Please wait...' : mode === 'login' ? 'Log in' : 'Sign up'}
           </Button>
 
-          <p className="text-center text-xs text-slate-500 pt-1">
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400 pt-1">
             {mode === 'login' ? (
               <>
                 No account?{' '}

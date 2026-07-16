@@ -10,12 +10,12 @@ export default function ProjectSettingsPage() {
       <div>
         <Link
           to={`/projects/${projectId}/board`}
-          className="flex items-center gap-1 w-fit text-sm text-slate-500 hover:text-slate-800 transition-colors duration-150"
+          className="flex items-center gap-1 w-fit text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-colors duration-150"
         >
           <ArrowLeft className="size-3.5" />
           Back to board
         </Link>
-        <h2 className="text-xl font-semibold mb-5 mt-3 text-slate-900">Project Settings</h2>
+        <h2 className="text-xl font-semibold mb-5 mt-3 text-slate-900 dark:text-slate-100">Project Settings</h2>
       </div>
       <ProjectMembers projectId={projectId} />
       <WorkflowSettings projectId={projectId} />

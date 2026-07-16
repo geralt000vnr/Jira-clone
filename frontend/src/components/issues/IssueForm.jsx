@@ -31,7 +31,7 @@ export default function IssueForm({ issue, onSave, onStatusChange, statuses = []
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => saveIfChanged('title', title, issue.title)}
-          className="text-lg font-semibold w-full border-b border-transparent hover:border-slate-200 focus:outline-none focus:border-indigo-500 pb-1 transition-colors duration-150 -mx-1 px-1"
+          className="text-lg font-semibold w-full text-slate-900 dark:text-slate-100 border-b border-transparent hover:border-slate-200 dark:hover:border-slate-700 focus:outline-none focus:border-indigo-500 pb-1 transition-colors duration-150 -mx-1 px-1"
         />
         {saved && (
           <span className="flex items-center gap-1 text-xs text-emerald-600 shrink-0 animate-fade-in">
@@ -51,7 +51,7 @@ export default function IssueForm({ issue, onSave, onStatusChange, statuses = []
       />
 
       <div className="flex gap-4 text-sm flex-wrap">
-        <label className="flex flex-col gap-1 text-slate-500">
+        <label className="flex flex-col gap-1 text-slate-500 dark:text-slate-400">
           Status
           {/* Status changes go through the move endpoint, not the general update endpoint
               (the backend's updateIssue only accepts title/description/priority/assigneeId/dueDate/labels/sprintId/storyPoints/originalEstimateSeconds) */}
@@ -64,7 +64,7 @@ export default function IssueForm({ issue, onSave, onStatusChange, statuses = []
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-slate-500">
+        <label className="flex flex-col gap-1 text-slate-500 dark:text-slate-400">
           Priority
           <select
             value={issue.priority}
@@ -79,7 +79,7 @@ export default function IssueForm({ issue, onSave, onStatusChange, statuses = []
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-slate-500">
+        <label className="flex flex-col gap-1 text-slate-500 dark:text-slate-400">
           Story points
           <input
             type="number"
@@ -96,7 +96,7 @@ export default function IssueForm({ issue, onSave, onStatusChange, statuses = []
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-slate-500">
+        <label className="flex flex-col gap-1 text-slate-500 dark:text-slate-400">
           Due date
           <input
             type="date"

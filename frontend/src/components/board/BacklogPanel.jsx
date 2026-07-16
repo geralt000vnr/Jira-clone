@@ -6,6 +6,8 @@ import { workflowStatusApi } from '../../api/workflowStatusApi';
 import { projectApi } from '../../api/projectApi';
 import { Button } from '../ui/button';
 import { cn, fieldClass, STATUS_DOT_CLASS } from '../../lib/utils';
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 export default function BacklogPanel({ projectId }) {
   const [sprints, setSprints] = useState([]);
@@ -19,6 +21,8 @@ export default function BacklogPanel({ projectId }) {
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const { showToast } = useToast();
+  const confirm = useConfirm();
 
   const statusById = Object.fromEntries(statuses.map((s) => [s._id, s]));
 
@@ -76,18 +80,19 @@ export default function BacklogPanel({ projectId }) {
       await sprintApi.start(sprintId);
       load();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to start sprint');
+      showToast(err.response?.data?.message || 'Failed to start sprint');
     }
   };
 
   const handleComplete = async (sprintId) => {
-    if (!confirm('Complete this sprint? Unfinished issues will return to the backlog.')) return;
+    if (!(await confirm('Complete this sprint? Unfinished issues will return to the backlog.', { confirmLabel: 'Complete' })))
+      return;
     await sprintApi.complete(sprintId);
     load();
   };
 
   const handleAddToSprint = async (issueId) => {
-    if (!activeSprint) return alert('Start a sprint first');
+    if (!activeSprint) return showToast('Start a sprint first');
     await sprintApi.addIssue(activeSprint._id, issueId);
     load();
   };
@@ -107,7 +112,8 @@ export default function BacklogPanel({ projectId }) {
     setBulkBusy(true);
     try {
       const { failed } = await issueApi.bulkUpdate(selectedItems(), updates);
-      if (failed.length > 0) alert(`${failed.length} issue(s) couldn't be updated (they may have changed elsewhere).`);
+      if (failed.length > 0)
+        showToast(`${failed.length} issue(s) couldn't be updated (they may have changed elsewhere).`);
       load();
     } finally {
       setBulkBusy(false);
@@ -115,7 +121,8 @@ export default function BacklogPanel({ projectId }) {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selected.size} issue(s)? This cannot be undone.`)) return;
+    if (!(await confirm(`Delete ${selected.size} issue(s)? This cannot be undone.`, { confirmLabel: 'Delete' })))
+      return;
     setBulkBusy(true);
     try {
       await issueApi.bulkRemove([...selected]);
@@ -130,9 +137,9 @@ export default function BacklogPanel({ projectId }) {
   return (
     <div className="p-4 max-w-3xl mx-auto space-y-6 animate-fade-in">
       {activeSprint ? (
-        <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="flex items-center justify-between px-4 py-3 bg-indigo-50/60 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+        <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3 bg-indigo-50/60 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <Rocket className="size-4 text-indigo-500" />
               {activeSprint.name}
               <span className="text-xs font-normal text-indigo-500 bg-indigo-100 rounded-full px-2 py-0.5">active</span>
@@ -145,39 +152,39 @@ export default function BacklogPanel({ projectId }) {
               Complete sprint
             </button>
           </div>
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {activeSprintIssues.map((i) => (
-              <li key={i._id} className="px-4 py-2.5 text-sm flex justify-between items-center hover:bg-slate-50 transition-colors">
-                <span className="text-slate-700">
-                  <span className="text-slate-400 mr-1.5">{i.key}</span>
+              <li key={i._id} className="px-4 py-2.5 text-sm flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                <span className="text-slate-700 dark:text-slate-300">
+                  <span className="text-slate-400 dark:text-slate-500 mr-1.5">{i.key}</span>
                   {i.title}
                 </span>
-                <span className="text-xs text-slate-400 flex items-center gap-1.5">
+                <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                   <span className={cn('size-1.5 rounded-full', STATUS_DOT_CLASS[statusById[i.statusId]?.color] || STATUS_DOT_CLASS.slate)} />
                   {statusById[i.statusId]?.name || 'Unknown'}
                 </span>
               </li>
             ))}
             {activeSprintIssues.length === 0 && (
-              <li className="px-4 py-6 text-sm text-slate-400 text-center">No issues in this sprint yet.</li>
+              <li className="px-4 py-6 text-sm text-slate-400 dark:text-slate-500 text-center">No issues in this sprint yet.</li>
             )}
           </ul>
         </section>
       ) : (
-        <p className="text-sm text-slate-500 bg-slate-100/70 rounded-lg px-4 py-3">
+        <p className="text-sm text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/60 rounded-lg px-4 py-3">
           No active sprint. Start a planned sprint below, or create one.
         </p>
       )}
 
       <section>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold flex items-center gap-2 text-slate-800">
-            <Inbox className="size-4 text-slate-400" />
+          <h3 className="font-semibold flex items-center gap-2 text-slate-800 dark:text-slate-200">
+            <Inbox className="size-4 text-slate-400 dark:text-slate-500" />
             Backlog
           </h3>
           {selected.size > 0 && (
             <div className="flex items-center gap-2 text-xs animate-slide-down">
-              <span className="text-slate-500">{selected.size} selected</span>
+              <span className="text-slate-500 dark:text-slate-400">{selected.size} selected</span>
               <select
                 disabled={bulkBusy}
                 defaultValue=""
@@ -216,22 +223,22 @@ export default function BacklogPanel({ projectId }) {
                 <Trash2 className="size-3.5" />
                 Delete
               </button>
-              <button onClick={() => setSelected(new Set())} className="text-slate-400 hover:text-slate-700 p-1">
+              <button onClick={() => setSelected(new Set())} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 p-1">
                 <X className="size-3.5" />
               </button>
             </div>
           )}
         </div>
-        <ul className="divide-y divide-slate-100 border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+        <ul className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
           {backlogIssues.map((i) => (
             <li
               key={i._id}
               className={cn(
-                'px-4 py-2.5 text-sm flex justify-between items-center hover:bg-slate-50 transition-colors group',
+                'px-4 py-2.5 text-sm flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors group',
                 selected.has(i._id) && 'bg-indigo-50/60'
               )}
             >
-              <label className="flex items-center gap-3 text-slate-700 cursor-pointer flex-1">
+              <label className="flex items-center gap-3 text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
                 <input
                   type="checkbox"
                   checked={selected.has(i._id)}
@@ -239,7 +246,7 @@ export default function BacklogPanel({ projectId }) {
                   className="cursor-pointer"
                 />
                 <span>
-                  <span className="text-slate-400 mr-1.5">{i.key}</span>
+                  <span className="text-slate-400 dark:text-slate-500 mr-1.5">{i.key}</span>
                   {i.title}
                 </span>
               </label>
@@ -252,24 +259,24 @@ export default function BacklogPanel({ projectId }) {
               </button>
             </li>
           ))}
-          {backlogIssues.length === 0 && <li className="px-4 py-6 text-sm text-slate-400 text-center">Backlog is empty.</li>}
+          {backlogIssues.length === 0 && <li className="px-4 py-6 text-sm text-slate-400 dark:text-slate-500 text-center">Backlog is empty.</li>}
         </ul>
       </section>
 
       <section>
-        <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-800">
-          <CalendarDays className="size-4 text-slate-400" />
+        <h3 className="font-semibold mb-2 flex items-center gap-2 text-slate-800 dark:text-slate-200">
+          <CalendarDays className="size-4 text-slate-400 dark:text-slate-500" />
           Planned Sprints
         </h3>
         <ul className="space-y-1.5 mb-3">
           {plannedSprints.map((s) => (
             <li
               key={s._id}
-              className="flex justify-between items-center text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white shadow-sm hover:border-slate-300 transition-colors"
+              className="flex justify-between items-center text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-900 shadow-sm hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
             >
-              <span className="text-slate-700">
+              <span className="text-slate-700 dark:text-slate-300">
                 {s.name}{' '}
-                <span className="text-slate-400">
+                <span className="text-slate-400 dark:text-slate-500">
                   ({new Date(s.startDate).toLocaleDateString()} – {new Date(s.endDate).toLocaleDateString()})
                 </span>
               </span>
@@ -282,12 +289,12 @@ export default function BacklogPanel({ projectId }) {
               </button>
             </li>
           ))}
-          {plannedSprints.length === 0 && <li className="text-sm text-slate-400">No planned sprints.</li>}
+          {plannedSprints.length === 0 && <li className="text-sm text-slate-400 dark:text-slate-500">No planned sprints.</li>}
         </ul>
 
         <form
           onSubmit={handleCreateSprint}
-          className="flex flex-wrap gap-2 items-end bg-white border border-slate-200 rounded-xl p-3 shadow-sm"
+          className="flex flex-wrap gap-2 items-end bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm"
         >
           <input
             placeholder="Sprint name"

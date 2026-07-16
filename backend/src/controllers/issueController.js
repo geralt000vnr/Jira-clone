@@ -67,10 +67,12 @@ exports.createIssue = async (req, res, next) => {
   }
 };
 
-// GET /api/issues?projectId=&statusId=&priority=&assigneeId=&q=&sprintId=
+// GET /api/issues?projectId=&statusId=&priority=&assigneeId=&q=&sprintId=&page=&limit=
+// page/limit are optional (default page 1, limit 200) so existing callers that only care
+// about `issues` keep working unchanged for any project under the default limit.
 exports.listIssues = async (req, res, next) => {
   try {
-    const { projectId, statusId, priority, assigneeId, q, sprintId } = req.query;
+    const { projectId, statusId, priority, assigneeId, q, sprintId, page, limit } = req.query;
     const filter = req.scope({ projectId });
     if (statusId) filter.statusId = statusId;
     if (priority) filter.priority = priority;
@@ -78,8 +80,15 @@ exports.listIssues = async (req, res, next) => {
     if (sprintId) filter.sprintId = sprintId;
     if (q) filter.$text = { $search: q };
 
-    const issues = await Issue.find(filter).sort({ boardPosition: 1 });
-    res.json({ success: true, issues });
+    const [issues, total] = await Promise.all([
+      Issue.find(filter)
+        .sort({ boardPosition: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      Issue.countDocuments(filter),
+    ]);
+
+    res.json({ success: true, issues, total, page, limit });
   } catch (err) {
     next(err);
   }

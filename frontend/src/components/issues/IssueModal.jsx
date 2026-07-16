@@ -7,6 +7,8 @@ import { worklogApi } from '../../api/worklogApi';
 import CommentThread from './CommentThread';
 import IssueForm from './IssueForm';
 import { cn, fieldClass, getInitials } from '../../lib/utils';
+import { useToast } from '../../context/ToastContext';
+import { useConfirm } from '../../context/ConfirmContext';
 
 function formatDuration(seconds) {
   if (!seconds) return '0h';
@@ -33,6 +35,8 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
   const [activity, setActivity] = useState([]);
   const [tab, setTab] = useState('comments'); // 'comments' | 'attachments' | 'activity'
   const [error, setError] = useState(null);
+  const { showToast } = useToast();
+  const confirm = useConfirm();
 
   const loadAll = useCallback(async () => {
     try {
@@ -74,7 +78,7 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
       setIssue(updated);
     } catch (err) {
       if (err.response?.status === 409) {
-        alert('This issue changed elsewhere. Reloading the latest version.');
+        showToast('This issue changed elsewhere. Reloading the latest version.');
         loadAll();
       } else {
         setError('Failed to save changes');
@@ -93,7 +97,7 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
       setIssue(updated);
     } catch (err) {
       if (err.response?.status === 409) {
-        alert('This issue changed elsewhere. Reloading the latest version.');
+        showToast('This issue changed elsewhere. Reloading the latest version.');
         loadAll();
       } else {
         setError('Failed to change status');
@@ -102,41 +106,41 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Delete this issue? This cannot be undone.')) return;
+    if (!(await confirm('Delete this issue? This cannot be undone.', { confirmLabel: 'Delete' }))) return;
     await issueApi.remove(issueId);
     onClose(true); // signal parent board to refresh
   };
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-fade-in"
       onClick={() => onClose(false)}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl animate-scale-in"
+        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {!issue ? (
           <div className="p-6 space-y-4">
-            <div className="h-5 w-40 rounded bg-slate-100 animate-pulse" />
-            <div className="h-8 w-2/3 rounded bg-slate-100 animate-pulse" />
-            <div className="h-20 rounded bg-slate-100 animate-pulse" />
+            <div className="h-5 w-40 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="h-8 w-2/3 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="h-20 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
           </div>
         ) : (
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <span className="text-xs font-medium tracking-wide text-slate-400">{issue.key}</span>
+              <span className="text-xs font-medium tracking-wide text-slate-400 dark:text-slate-500">{issue.key}</span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md px-2 py-1 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-md px-2 py-1 transition-colors duration-150"
                 >
                   <Trash2 className="size-3.5" />
                   Delete
                 </button>
                 <button
                   onClick={() => onClose(false)}
-                  className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md p-1.5 transition-colors duration-150"
+                  className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md p-1.5 transition-colors duration-150"
                 >
                   <X className="size-4" />
                 </button>
@@ -155,14 +159,14 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
 
             {subtasks.length > 0 && (
               <div className="mt-5">
-                <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5 text-slate-700">
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                   <ListTodo className="size-4" />
                   Subtasks ({subtasks.length})
                 </h4>
-                <ul className="space-y-1 border border-slate-100 rounded-lg divide-y divide-slate-100 overflow-hidden">
+                <ul className="space-y-1 border border-slate-100 dark:border-slate-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
                   {subtasks.map((st) => (
-                    <li key={st._id} className="text-sm text-slate-600 px-3 py-2 hover:bg-slate-50 transition-colors">
-                      <span className="text-slate-400 mr-1.5">{st.key}</span>
+                    <li key={st._id} className="text-sm text-slate-600 dark:text-slate-400 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+                      <span className="text-slate-400 dark:text-slate-500 mr-1.5">{st.key}</span>
                       {st.title}
                     </li>
                   ))}
@@ -177,7 +181,7 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
               onChange={setLinks}
             />
 
-            <div className="mt-6 border-b border-slate-200 flex gap-1 text-sm">
+            <div className="mt-6 border-b border-slate-200 dark:border-slate-700 flex gap-1 text-sm">
               {TABS.map(({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -189,7 +193,7 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
                     'flex items-center gap-1.5 px-3 pb-2.5 pt-1 -mb-px border-b-2 transition-colors duration-150',
                     tab === id
                       ? 'border-indigo-600 text-indigo-600 font-medium'
-                      : 'border-transparent text-slate-500 hover:text-slate-700'
+                      : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                   )}
                 >
                   <Icon className="size-3.5" />
@@ -208,18 +212,18 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
               {tab === 'activity' && (
                 <ul className="mt-4 space-y-2 text-sm">
                   {activity.map((a) => (
-                    <li key={a._id} className="text-slate-600 flex items-start gap-2 py-1">
+                    <li key={a._id} className="text-slate-600 dark:text-slate-400 flex items-start gap-2 py-1">
                       <span className="size-1.5 rounded-full bg-slate-300 mt-2 shrink-0" />
                       <span>
-                        <span className="font-medium text-slate-800">{a.actorId?.name}</span> changed{' '}
-                        <span className="font-mono text-xs bg-slate-100 rounded px-1 py-0.5">{a.field}</span> from{' '}
-                        <em className="not-italic text-slate-500">{String(a.fromValue)}</em> to{' '}
-                        <em className="not-italic text-slate-800 font-medium">{String(a.toValue)}</em>
-                        <span className="text-xs text-slate-400 ml-2">{new Date(a.createdAt).toLocaleString()}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{a.actorId?.name}</span> changed{' '}
+                        <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 rounded px-1 py-0.5">{a.field}</span> from{' '}
+                        <em className="not-italic text-slate-500 dark:text-slate-400">{String(a.fromValue)}</em> to{' '}
+                        <em className="not-italic text-slate-800 dark:text-slate-200 font-medium">{String(a.toValue)}</em>
+                        <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">{new Date(a.createdAt).toLocaleString()}</span>
                       </span>
                     </li>
                   ))}
-                  {activity.length === 0 && <li className="text-slate-400">No activity yet.</li>}
+                  {activity.length === 0 && <li className="text-slate-400 dark:text-slate-500">No activity yet.</li>}
                 </ul>
               )}
             </div>
@@ -283,7 +287,7 @@ function TimeTrackingSection({ issueId, issue, worklogs, onIssueChange, onWorklo
   return (
     <div className="mt-5">
       <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-semibold flex items-center gap-1.5 text-slate-700">
+        <h4 className="text-sm font-semibold flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
           <Timer className="size-4" />
           Time tracking
         </h4>
@@ -296,12 +300,12 @@ function TimeTrackingSection({ issueId, issue, worklogs, onIssueChange, onWorklo
         </button>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-slate-500 mb-1">
-        <span className="text-slate-700 font-medium">{formatDuration(logged)} logged</span>
+      <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-1">
+        <span className="text-slate-700 dark:text-slate-300 font-medium">{formatDuration(logged)} logged</span>
         {hasEstimate && <span>of {formatDuration(total)} estimated</span>}
       </div>
       {hasEstimate && (
-        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden mb-2">
+        <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
           <div
             className={cn('h-full rounded-full transition-all duration-300', pct > 100 ? 'bg-red-400' : 'bg-indigo-500')}
             style={{ width: `${Math.min(100, pct)}%` }}
@@ -320,7 +324,7 @@ function TimeTrackingSection({ issueId, issue, worklogs, onIssueChange, onWorklo
       )}
 
       {showForm && (
-        <div className="border border-slate-200 rounded-lg p-3 space-y-2 animate-slide-down bg-slate-50/50 mb-2">
+        <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 space-y-2 animate-slide-down bg-slate-50/50 dark:bg-slate-800/40 mb-2">
           <div className="flex gap-2">
             <input
               type="number"
@@ -340,7 +344,7 @@ function TimeTrackingSection({ issueId, issue, worklogs, onIssueChange, onWorklo
             />
           </div>
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowForm(false)} className="text-xs text-slate-500 px-2 py-1">
+            <button onClick={() => setShowForm(false)} className="text-xs text-slate-500 dark:text-slate-400 px-2 py-1">
               Cancel
             </button>
             <button
@@ -357,15 +361,15 @@ function TimeTrackingSection({ issueId, issue, worklogs, onIssueChange, onWorklo
       {worklogs.length > 0 && (
         <ul className="space-y-1">
           {worklogs.map((w) => (
-            <li key={w._id} className="text-xs text-slate-500 flex items-center justify-between py-1 px-2 hover:bg-slate-50 rounded">
+            <li key={w._id} className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between py-1 px-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded">
               <span className="flex items-center gap-1.5">
                 <span className="size-4 rounded-full bg-indigo-100 text-indigo-700 text-[9px] font-medium flex items-center justify-center">
                   {getInitials(w.authorId?.name)}
                 </span>
-                <span className="font-medium text-slate-700">{formatDuration(w.timeSpentSeconds)}</span>
-                {w.description && <span className="text-slate-400">— {w.description}</span>}
+                <span className="font-medium text-slate-700 dark:text-slate-300">{formatDuration(w.timeSpentSeconds)}</span>
+                {w.description && <span className="text-slate-400 dark:text-slate-500">— {w.description}</span>}
               </span>
-              <button onClick={() => handleRemove(w)} className="text-slate-300 hover:text-red-500 transition-colors duration-150">
+              <button onClick={() => handleRemove(w)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors duration-150">
                 <Trash2 className="size-3" />
               </button>
             </li>
@@ -419,7 +423,7 @@ function LinkedIssuesSection({ issueId, projectId, links, onChange }) {
   return (
     <div className="mt-5">
       <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-semibold flex items-center gap-1.5 text-slate-700">
+        <h4 className="text-sm font-semibold flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
           <Link2 className="size-4" />
           Linked issues {links.length > 0 && `(${links.length})`}
         </h4>
@@ -433,14 +437,14 @@ function LinkedIssuesSection({ issueId, projectId, links, onChange }) {
       </div>
 
       {links.length > 0 && (
-        <ul className="space-y-1 border border-slate-100 rounded-lg divide-y divide-slate-100 overflow-hidden mb-2">
+        <ul className="space-y-1 border border-slate-100 dark:border-slate-800 rounded-lg divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden mb-2">
           {links.map((link) => (
-            <li key={link._id} className="text-sm px-3 py-2 hover:bg-slate-50 transition-colors flex items-center justify-between">
-              <span className="text-slate-600">
-                <span className="text-slate-400 italic">{link.label}</span>{' '}
-                <span className="text-slate-400">{link.issue.key}</span> {link.issue.title}
+            <li key={link._id} className="text-sm px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex items-center justify-between">
+              <span className="text-slate-600 dark:text-slate-400">
+                <span className="text-slate-400 dark:text-slate-500 italic">{link.label}</span>{' '}
+                <span className="text-slate-400 dark:text-slate-500">{link.issue.key}</span> {link.issue.title}
               </span>
-              <button onClick={() => handleRemove(link._id)} className="text-slate-400 hover:text-red-500 transition-colors duration-150">
+              <button onClick={() => handleRemove(link._id)} className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors duration-150">
                 <Trash2 className="size-3.5" />
               </button>
             </li>
@@ -449,7 +453,7 @@ function LinkedIssuesSection({ issueId, projectId, links, onChange }) {
       )}
 
       {showForm && (
-        <div className="border border-slate-200 rounded-lg p-3 space-y-2 animate-slide-down bg-slate-50/50">
+        <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-3 space-y-2 animate-slide-down bg-slate-50/50 dark:bg-slate-800/40">
           <div className="flex gap-2">
             <select value={type} onChange={(e) => setType(e.target.value)} className={cn('px-2 py-1.5 text-sm cursor-pointer', fieldClass)}>
               {LINK_TYPES.map((t) => (
@@ -459,7 +463,7 @@ function LinkedIssuesSection({ issueId, projectId, links, onChange }) {
               ))}
             </select>
             <div className="relative flex-1">
-              <Search className="size-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="size-3.5 text-slate-400 dark:text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 value={selected ? `${selected.key} — ${selected.title}` : query}
                 onChange={(e) => {
@@ -472,7 +476,7 @@ function LinkedIssuesSection({ issueId, projectId, links, onChange }) {
             </div>
           </div>
           {results.length > 0 && !selected && (
-            <ul className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-40 overflow-y-auto bg-white">
+            <ul className="border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-40 overflow-y-auto bg-white dark:bg-slate-900">
               {results.map((r) => (
                 <li
                   key={r._id}
@@ -482,14 +486,14 @@ function LinkedIssuesSection({ issueId, projectId, links, onChange }) {
                   }}
                   className="text-sm px-3 py-1.5 hover:bg-indigo-50 cursor-pointer"
                 >
-                  <span className="text-slate-400 mr-1.5">{r.key}</span>
+                  <span className="text-slate-400 dark:text-slate-500 mr-1.5">{r.key}</span>
                   {r.title}
                 </li>
               ))}
             </ul>
           )}
           <div className="flex justify-end gap-2">
-            <button onClick={() => setShowForm(false)} className="text-xs text-slate-500 px-2 py-1">
+            <button onClick={() => setShowForm(false)} className="text-xs text-slate-500 dark:text-slate-400 px-2 py-1">
               Cancel
             </button>
             <button
@@ -536,7 +540,7 @@ function AttachmentPanel({ issueId, attachments, onChange }) {
         {attachments.map((a) => (
           <li
             key={a._id}
-            className="flex items-center justify-between text-sm border border-slate-100 rounded-lg px-3 py-2 hover:border-slate-200 hover:bg-slate-50 transition-colors duration-150"
+            className="flex items-center justify-between text-sm border border-slate-100 dark:border-slate-800 rounded-lg px-3 py-2 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150"
           >
             <button onClick={() => handleOpen(a)} className="flex items-center gap-2 text-indigo-600 hover:underline text-left">
               <FileText className="size-3.5 shrink-0" />
@@ -544,13 +548,13 @@ function AttachmentPanel({ issueId, attachments, onChange }) {
             </button>
             <button
               onClick={() => handleRemove(a._id)}
-              className="text-slate-400 hover:text-red-500 transition-colors duration-150"
+              className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors duration-150"
             >
               <Trash2 className="size-3.5" />
             </button>
           </li>
         ))}
-        {attachments.length === 0 && <li className="text-slate-400 text-sm">No attachments yet.</li>}
+        {attachments.length === 0 && <li className="text-slate-400 dark:text-slate-500 text-sm">No attachments yet.</li>}
       </ul>
     </div>
   );

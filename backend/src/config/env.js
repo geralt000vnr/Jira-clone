@@ -12,4 +12,7 @@ module.exports = {
   mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET,
   clientUrl: process.env.CLIENT_URL || '*',
+  // optional — rate limiting falls back to an in-memory store when this isn't set,
+  // which is fine for a single instance but won't share state across multiple
+  redisUrl: process.env.REDIS_URL || null,
 };

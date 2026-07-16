@@ -15,7 +15,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.index({ organizationId: 1, email: 1 }, { unique: true });
+// Email must be globally unique, not just per-org: authController.login looks a user up
+// by email alone (it runs before the caller has a token, so there's no org to scope by
+// yet), and each User row belongs to exactly one organizationId. A per-org unique index
+// would let the same email sign up repeatedly under different orgs, and login would then
+// resolve to whichever one Mongo happens to return first.
+userSchema.index({ email: 1 }, { unique: true });
 
 userSchema.methods.comparePassword = function (plain) {
   return bcrypt.compare(plain, this.passwordHash);

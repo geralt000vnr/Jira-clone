@@ -33,3 +33,15 @@ exports.moveIssueSchema = z.object({
   fromStatusId: z.string().min(1).optional(),
   expectedVersion: z.number().int().nonnegative(),
 });
+
+exports.listIssuesQuerySchema = z.object({
+  projectId: z.string().min(1),
+  statusId: z.string().optional(),
+  priority: z.enum(PRIORITIES).optional(),
+  assigneeId: z.string().optional(),
+  sprintId: z.string().optional(),
+  q: z.string().optional(),
+  // coerce since query params always arrive as strings
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(500).optional().default(200),
+});

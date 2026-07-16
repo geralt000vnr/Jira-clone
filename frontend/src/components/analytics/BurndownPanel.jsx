@@ -27,7 +27,7 @@ export default function BurndownPanel({ projectId }) {
 
   if (sprints.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 text-sm text-slate-400">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 text-sm text-slate-400 dark:text-slate-500">
         No sprints yet — create one from the Backlog tab to see a burndown.
       </div>
     );
@@ -47,7 +47,7 @@ export default function BurndownPanel({ projectId }) {
             </option>
           ))}
         </select>
-        {totalPoints > 0 && <span className="text-xs text-slate-400">{totalPoints} points at sprint start</span>}
+        {totalPoints > 0 && <span className="text-xs text-slate-400 dark:text-slate-500">{totalPoints} points at sprint start</span>}
       </div>
       {data && <BurndownChart data={data} />}
     </div>

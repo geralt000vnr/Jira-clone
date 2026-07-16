@@ -10,6 +10,7 @@ const commentRoutes = require('./routes/commentRoutes'); // mounts /issues/:issu
 const attachmentRoutes = require('./routes/attachmentRoutes'); // mounts /issues/:issueId/attachments and /attachments/:id
 const worklogRoutes = require('./routes/worklogRoutes'); // mounts /issues/:id/worklogs and /worklogs/:id
 const savedFilterRoutes = require('./routes/savedFilterRoutes'); // mounts /projects/:projectId/saved-filters and /saved-filters/:id
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,7 @@ app.use('/api', commentRoutes); // note: comment routes define their own /issues
 app.use('/api', attachmentRoutes); // same for attachments
 app.use('/api', worklogRoutes); // same for worklogs
 app.use('/api', savedFilterRoutes); // same for saved filters
+app.use('/api/users', userRoutes);
 
 app.use(errorHandler);
 

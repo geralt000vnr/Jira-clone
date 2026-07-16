@@ -46,10 +46,10 @@ export default function CommentThread({ issueId, comments, onChange }) {
           <div className="size-7 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-medium flex items-center justify-center shrink-0 mt-0.5">
             {getInitials(c.authorId?.name)}
           </div>
-          <div className="flex-1 border border-slate-100 rounded-lg p-3 text-sm bg-slate-50/50">
+          <div className="flex-1 border border-slate-100 dark:border-slate-800 rounded-lg p-3 text-sm bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex justify-between items-center mb-1">
-              <span className="font-medium text-slate-800">{c.authorId?.name}</span>
-              <span className="text-xs text-slate-400">{new Date(c.createdAt).toLocaleString()}</span>
+              <span className="font-medium text-slate-800 dark:text-slate-200">{c.authorId?.name}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">{new Date(c.createdAt).toLocaleString()}</span>
             </div>
 
             {editingId === c._id ? (
@@ -64,26 +64,26 @@ export default function CommentThread({ issueId, comments, onChange }) {
                   <button onClick={() => saveEdit(c._id)} className="text-indigo-600 text-xs font-medium hover:underline">
                     Save
                   </button>
-                  <button onClick={() => setEditingId(null)} className="text-slate-400 text-xs hover:underline">
+                  <button onClick={() => setEditingId(null)} className="text-slate-400 dark:text-slate-500 text-xs hover:underline">
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
               <>
-                <p className="text-slate-700 whitespace-pre-wrap">{c.body}</p>
+                <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{c.body}</p>
                 {String(c.authorId?._id) === String(user.id) && (
                   <div className="flex gap-3 mt-1.5">
                     <button
                       onClick={() => startEdit(c)}
-                      className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-700 transition-colors duration-150"
+                      className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-150"
                     >
                       <Pencil className="size-3" />
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(c._id)}
-                      className="flex items-center gap-1 text-xs text-slate-400 hover:text-red-500 transition-colors duration-150"
+                      className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors duration-150"
                     >
                       <Trash2 className="size-3" />
                       Delete

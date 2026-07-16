@@ -37,15 +37,15 @@ export default function CreateIssueModal({ projectId, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-fade-in"
+      className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-fade-in"
       onClick={() => onClose(false)}
     >
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-2xl w-full max-w-md p-6 space-y-3 shadow-2xl animate-scale-in"
+        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 space-y-3 shadow-2xl animate-scale-in"
       >
-        <h3 className="font-semibold text-lg flex items-center gap-2 text-slate-900">
+        <h3 className="font-semibold text-lg flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <Sparkles className="size-4 text-indigo-500" />
           New Issue
         </h3>
@@ -58,7 +58,7 @@ export default function CreateIssueModal({ projectId, onClose }) {
           required
         />
         <div className="flex gap-3">
-          <label className="flex-1 flex flex-col gap-1 text-sm text-slate-500">
+          <label className="flex-1 flex flex-col gap-1 text-sm text-slate-500 dark:text-slate-400">
             Type
             <select value={type} onChange={(e) => setType(e.target.value)} className={selectClass}>
               {TYPES.map((t) => (
@@ -68,7 +68,7 @@ export default function CreateIssueModal({ projectId, onClose }) {
               ))}
             </select>
           </label>
-          <label className="flex-1 flex flex-col gap-1 text-sm text-slate-500">
+          <label className="flex-1 flex flex-col gap-1 text-sm text-slate-500 dark:text-slate-400">
             Priority
             <select value={priority} onChange={(e) => setPriority(e.target.value)} className={selectClass}>
               {PRIORITIES.map((p) => (

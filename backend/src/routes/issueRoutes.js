@@ -2,14 +2,19 @@ const router = require('express').Router();
 const auth = require('../middleware/auth');
 const tenantScope = require('../middleware/tenantScope');
 const validate = require('../middleware/validate');
-const { createIssueSchema, updateIssueSchema, moveIssueSchema } = require('../validation/issueSchemas');
+const {
+  createIssueSchema,
+  updateIssueSchema,
+  moveIssueSchema,
+  listIssuesQuerySchema,
+} = require('../validation/issueSchemas');
 const { createIssueLinkSchema } = require('../validation/issueLinkSchemas');
 const { bulkUpdateIssuesSchema, bulkDeleteIssuesSchema } = require('../validation/issueBulkSchemas');
 const issueController = require('../controllers/issueController');
 
 router.use(auth, tenantScope);
 
-router.get('/', issueController.listIssues);
+router.get('/', validate(listIssuesQuerySchema, 'query'), issueController.listIssues);
 router.post('/', validate(createIssueSchema), issueController.createIssue);
 
 // bulk routes must be registered before the /:id routes below, or Express would

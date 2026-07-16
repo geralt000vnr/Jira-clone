@@ -12,6 +12,7 @@ import useIssueFilters from '../hooks/useIssueFilters';
 import { projectApi } from '../api/projectApi';
 import { workflowStatusApi } from '../api/workflowStatusApi';
 import { Button } from '../components/ui/button';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { cn } from '../lib/utils';
 
 const TABS = [
@@ -42,11 +43,11 @@ export default function ProjectBoardPage() {
 
   return (
     <div>
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-5">
           <Link
             to="/"
-            className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors duration-150"
+            className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-colors duration-150"
           >
             <ArrowLeft className="size-3.5" />
             Projects
@@ -58,7 +59,9 @@ export default function ProjectBoardPage() {
                 onClick={() => setTab(id)}
                 className={cn(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-150',
-                  tab === id ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-slate-500 hover:bg-slate-100'
+                  tab === id
+                    ? 'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-medium'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                 )}
               >
                 <Icon className="size-4" />
@@ -67,13 +70,16 @@ export default function ProjectBoardPage() {
             ))}
           </div>
         </div>
-        <Link
-          to={`/projects/${projectId}/settings`}
-          className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors duration-150"
-        >
-          <Settings className="size-3.5" />
-          Settings
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            to={`/projects/${projectId}/settings`}
+            className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-colors duration-150"
+          >
+            <Settings className="size-3.5" />
+            Settings
+          </Link>
+          <ThemeToggle />
+        </div>
       </header>
 
       {tab === 'board' && (

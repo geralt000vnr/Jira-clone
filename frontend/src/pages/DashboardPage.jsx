@@ -1,30 +1,32 @@
 import { LogOut, KanbanSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ProjectList from '../components/projects/ProjectList';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { getInitials } from '../lib/utils';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900/50">
+      <header className="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="size-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
             <KanbanSquare className="size-4" />
           </div>
-          <span className="font-semibold text-slate-800">Jira Clone</span>
+          <span className="font-semibold text-slate-800 dark:text-slate-200">Jira Clone</span>
         </div>
         <div className="flex items-center gap-3 text-sm">
           <div className="flex items-center gap-2">
             <div className="size-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium flex items-center justify-center">
               {getInitials(user?.name)}
             </div>
-            <span className="text-slate-600">{user?.name}</span>
+            <span className="text-slate-600 dark:text-slate-400">{user?.name}</span>
           </div>
+          <ThemeToggle />
           <button
             onClick={logout}
-            className="flex items-center gap-1 text-slate-400 hover:text-red-500 transition-colors duration-150"
+            className="flex items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors duration-150"
           >
             <LogOut className="size-3.5" />
             Log out

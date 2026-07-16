@@ -3,11 +3,13 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import BoardColumn from './BoardColumn';
 import { issueApi } from '../../api/issueApi';
 import { useSocket } from '../../context/SocketContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function Board({ projectId, filters = {}, onIssueClick, members = [], statuses = [] }) {
   const [issuesByStatus, setIssuesByStatus] = useState({});
   const [loading, setLoading] = useState(true);
   const socket = useSocket();
+  const { showToast } = useToast();
 
   const loadIssues = useCallback(async () => {
     const issues = await issueApi.list({ projectId, ...filters });
@@ -63,7 +65,7 @@ export default function Board({ projectId, filters = {}, onIssueClick, members =
       });
     } catch (err) {
       if (err.response?.status === 409) {
-        alert('This issue was updated by someone else. Refreshing the board.');
+        showToast('This issue was updated by someone else. Refreshing the board.');
       }
       loadIssues(); // reconcile with server truth on any failure
     }
@@ -73,10 +75,10 @@ export default function Board({ projectId, filters = {}, onIssueClick, members =
     return (
       <div className="flex gap-4 p-4 overflow-x-auto">
         {(statuses.length ? statuses : [0, 1, 2]).map((s, i) => (
-          <div key={s._id || i} className="flex-1 min-w-[280px] bg-slate-50/70 rounded-xl p-3 space-y-2">
-            <div className="h-4 w-20 rounded bg-slate-200 animate-pulse mb-3" />
-            <div className="h-20 rounded-lg bg-slate-100 animate-pulse" />
-            <div className="h-20 rounded-lg bg-slate-100 animate-pulse" />
+          <div key={s._id || i} className="flex-1 min-w-[280px] bg-slate-50/70 dark:bg-slate-800/40 rounded-xl p-3 space-y-2">
+            <div className="h-4 w-20 rounded bg-slate-200 dark:bg-slate-700 animate-pulse mb-3" />
+            <div className="h-20 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
+            <div className="h-20 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" />
           </div>
         ))}
       </div>

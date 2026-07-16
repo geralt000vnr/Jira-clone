@@ -49,7 +49,7 @@ export default function FilterBar({ filtersState, members = [], statuses = [], p
   return (
     <div className="flex flex-wrap gap-2 items-center flex-1">
       <div className="relative flex-1 min-w-[180px]">
-        <Search className="size-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Search className="size-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -100,7 +100,7 @@ export default function FilterBar({ filtersState, members = [], statuses = [], p
             <button
               onClick={handleDelete}
               title="Delete saved filter"
-              className="text-slate-400 hover:text-red-500 transition-colors duration-150 p-1"
+              className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors duration-150 p-1"
             >
               <X className="size-3.5" />
             </button>
@@ -120,7 +120,7 @@ export default function FilterBar({ filtersState, members = [], statuses = [], p
           {showSaveForm && (
             <form
               onSubmit={handleSave}
-              className="absolute top-full left-0 mt-2 z-10 bg-white border border-slate-200 rounded-lg shadow-lg p-3 w-64 space-y-2 animate-slide-down"
+              className="absolute top-full left-0 mt-2 z-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg p-3 w-64 space-y-2 animate-slide-down"
             >
               <input
                 value={name}
@@ -130,12 +130,12 @@ export default function FilterBar({ filtersState, members = [], statuses = [], p
                 autoFocus
                 required
               />
-              <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer">
                 <input type="checkbox" checked={isShared} onChange={(e) => setIsShared(e.target.checked)} />
                 Share with team
               </label>
               <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setShowSaveForm(false)} className="text-xs text-slate-500 px-2 py-1">
+                <button type="button" onClick={() => setShowSaveForm(false)} className="text-xs text-slate-500 dark:text-slate-400 px-2 py-1">
                   Cancel
                 </button>
                 <button

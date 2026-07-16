@@ -2,6 +2,7 @@ const Comment = require('../models/Comment');
 const Issue = require('../models/Issue');
 const ApiError = require('../utils/ApiError');
 const { notifyIssueUpdate } = require('../services/notificationService');
+const { isProjectAdminForIssue } = require('../services/permissions');
 
 // POST /api/issues/:issueId/comments
 exports.createComment = async (req, res, next) => {
@@ -67,7 +68,12 @@ exports.deleteComment = async (req, res, next) => {
 
     const isAuthor = String(comment.authorId) === String(req.user.id);
     if (!isAuthor) {
-      throw new ApiError(403, 'Only the author can delete this comment');
+      const isAdmin = await isProjectAdminForIssue({
+        issueId: comment.issueId,
+        organizationId: req.user.organizationId,
+        userId: req.user.id,
+      });
+      if (!isAdmin) throw new ApiError(403, 'Only the author or a project admin can delete this comment');
     }
 
     comment.deletedAt = new Date();

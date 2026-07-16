@@ -3,6 +3,7 @@ const path = require('path');
 const Attachment = require('../models/Attachment');
 const storage = require('../services/fileStorage/LocalDiskStorage'); // swap this line for S3Storage later
 const ApiError = require('../utils/ApiError');
+const { isProjectAdminForIssue } = require('../services/permissions');
 
 const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
 
@@ -51,14 +52,20 @@ exports.listAttachments = async (req, res, next) => {
   }
 };
 
-// DELETE /api/attachments/:id  — uploader only
+// DELETE /api/attachments/:id  — uploader, or a project admin, may delete
 exports.deleteAttachment = async (req, res, next) => {
   try {
     const attachment = await Attachment.findOne({ _id: req.params.id, organizationId: req.user.organizationId });
     if (!attachment) throw new ApiError(404, 'Attachment not found');
 
-    if (String(attachment.uploadedBy) !== String(req.user.id)) {
-      throw new ApiError(403, 'Only the uploader can delete this attachment');
+    const isUploader = String(attachment.uploadedBy) === String(req.user.id);
+    if (!isUploader) {
+      const isAdmin = await isProjectAdminForIssue({
+        issueId: attachment.issueId,
+        organizationId: req.user.organizationId,
+        userId: req.user.id,
+      });
+      if (!isAdmin) throw new ApiError(403, 'Only the uploader or a project admin can delete this attachment');
     }
 
     await storage.delete(attachment.storageKey);

@@ -1,10 +1,16 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 body {
   margin: 0;
   background: #f8fafc;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  background: #0f172a;
 }
 
 @keyframes fade-in {
