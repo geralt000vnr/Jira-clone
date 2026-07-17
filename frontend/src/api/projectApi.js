@@ -10,4 +10,5 @@ export const projectApi = {
   addMember: (id, userId, role) =>
     axiosClient.post(`/projects/${id}/members`, { userId, role }).then((r) => r.data.membership),
   removeMember: (id, userId) => axiosClient.delete(`/projects/${id}/members/${userId}`).then((r) => r.data),
+  getRoadmap: (id) => axiosClient.get(`/projects/${id}/roadmap`).then((r) => r.data.epics),
 };

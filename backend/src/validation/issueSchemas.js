@@ -14,6 +14,8 @@ exports.createIssueSchema = z.object({
   storyPoints: z.number().min(0).max(999).nullable().optional(),
 });
 
+const customFieldValuesSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]));
+
 exports.updateIssueSchema = z.object({
   expectedVersion: z.number().int().nonnegative(),
   title: z.string().trim().min(1).max(300).optional(),
@@ -21,10 +23,12 @@ exports.updateIssueSchema = z.object({
   priority: z.enum(PRIORITIES).optional(),
   assigneeId: z.string().nullable().optional(),
   dueDate: z.string().datetime().nullable().optional(),
+  startDate: z.string().datetime().nullable().optional(),
   labels: z.array(z.string().trim().max(40)).max(20).optional(),
   sprintId: z.string().nullable().optional(),
   storyPoints: z.number().min(0).max(999).nullable().optional(),
   originalEstimateSeconds: z.number().min(0).nullable().optional(),
+  customFieldValues: customFieldValuesSchema.optional(),
 });
 
 exports.moveIssueSchema = z.object({

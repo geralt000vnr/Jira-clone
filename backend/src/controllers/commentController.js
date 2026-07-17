@@ -3,6 +3,7 @@ const Issue = require('../models/Issue');
 const ApiError = require('../utils/ApiError');
 const { notifyIssueUpdate } = require('../services/notificationService');
 const { isProjectAdminForIssue } = require('../services/permissions');
+const { runAutomations } = require('../services/automationEngine');
 
 // POST /api/issues/:issueId/comments
 exports.createComment = async (req, res, next) => {
@@ -21,6 +22,14 @@ exports.createComment = async (req, res, next) => {
 
     const populated = await comment.populate('authorId', 'name avatarUrl');
     notifyIssueUpdate({ issue, event: 'comment_added', actorId: req.user.id });
+
+    await runAutomations({
+      trigger: 'comment_added',
+      issue,
+      organizationId: req.user.organizationId,
+      projectId: issue.projectId,
+      actorId: req.user.id,
+    });
 
     res.status(201).json({ success: true, comment: populated });
   } catch (err) {

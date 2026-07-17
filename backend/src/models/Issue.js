@@ -22,6 +22,10 @@ const issueSchema = new mongoose.Schema(
     reporterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     labels: [{ type: String, trim: true }],
     dueDate: { type: Date, default: null },
+    startDate: { type: Date, default: null }, // paired with dueDate for the Epic roadmap timeline
+
+    // arbitrary per-project custom fields, keyed by CustomField._id -> value
+    customFieldValues: { type: mongoose.Schema.Types.Mixed, default: {} },
 
     // board column ordering
     boardPosition: { type: Number, default: 0 },

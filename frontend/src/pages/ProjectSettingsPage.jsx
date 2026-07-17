@@ -2,6 +2,8 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import ProjectMembers from '../components/projects/ProjectMembers';
 import WorkflowSettings from '../components/projects/WorkflowSettings';
+import CustomFieldSettings from '../components/projects/CustomFieldSettings';
+import AutomationRuleSettings from '../components/projects/AutomationRuleSettings';
 
 export default function ProjectSettingsPage() {
   const { projectId } = useParams();
@@ -19,6 +21,8 @@ export default function ProjectSettingsPage() {
       </div>
       <ProjectMembers projectId={projectId} />
       <WorkflowSettings projectId={projectId} />
+      <CustomFieldSettings projectId={projectId} />
+      <AutomationRuleSettings projectId={projectId} />
     </div>
   );
 }

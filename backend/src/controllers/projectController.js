@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const Project = require('../models/Project');
 const ProjectMember = require('../models/ProjectMember');
 const WorkflowStatus = require('../models/WorkflowStatus');
+const Issue = require('../models/Issue');
 const ApiError = require('../utils/ApiError');
 
 const DEFAULT_STATUSES = [
@@ -133,6 +135,60 @@ exports.removeMember = async (req, res, next) => {
     const { projectId, userId } = req.params;
     await ProjectMember.deleteOne({ projectId, userId, organizationId: req.user.organizationId });
     res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/projects/:projectId/roadmap
+// Returns every Epic in the project with its date range and a done/total
+// child-issue count, derived from an aggregate over child Issues + their
+// WorkflowStatus category (no separate progress-tracking field to maintain).
+exports.getRoadmap = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+
+    const epics = await Issue.find(req.scope({ projectId, type: 'epic' })).select('key title startDate dueDate');
+    const epicIds = epics.map((e) => e._id);
+
+    const counts = await Issue.aggregate([
+      {
+        $match: {
+          ...req.scope({ projectId: new mongoose.Types.ObjectId(projectId), parentId: { $in: epicIds } }),
+          organizationId: new mongoose.Types.ObjectId(req.user.organizationId),
+        },
+      },
+      {
+        $lookup: {
+          from: 'workflowstatuses',
+          localField: 'statusId',
+          foreignField: '_id',
+          as: 'status',
+        },
+      },
+      { $unwind: '$status' },
+      { $group: { _id: { parentId: '$parentId', category: '$status.category' }, count: { $sum: 1 } } },
+    ]);
+
+    const progressByEpic = {};
+    for (const c of counts) {
+      const pid = String(c._id.parentId);
+      progressByEpic[pid] = progressByEpic[pid] || { total: 0, done: 0 };
+      progressByEpic[pid].total += c.count;
+      if (c._id.category === 'done') progressByEpic[pid].done += c.count;
+    }
+
+    const result = epics.map((e) => ({
+      _id: e._id,
+      key: e.key,
+      title: e.title,
+      startDate: e.startDate,
+      dueDate: e.dueDate,
+      totalChildren: progressByEpic[String(e._id)]?.total || 0,
+      doneChildren: progressByEpic[String(e._id)]?.done || 0,
+    }));
+
+    res.json({ success: true, epics: result });
   } catch (err) {
     next(err);
   }

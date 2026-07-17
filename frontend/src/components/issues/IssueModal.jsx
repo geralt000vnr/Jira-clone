@@ -25,7 +25,7 @@ const TABS = [
   { id: 'activity', label: 'Activity', Icon: History },
 ];
 
-export default function IssueModal({ issueId, onClose, statuses = [] }) {
+export default function IssueModal({ issueId, onClose, statuses = [], customFields = [] }) {
   const [issue, setIssue] = useState(null);
   const [subtasks, setSubtasks] = useState([]);
   const [links, setLinks] = useState([]);
@@ -147,7 +147,13 @@ export default function IssueModal({ issueId, onClose, statuses = [] }) {
               </div>
             </div>
 
-            <IssueForm issue={issue} onSave={handleFieldSave} onStatusChange={handleStatusChange} statuses={statuses} />
+            <IssueForm
+              issue={issue}
+              onSave={handleFieldSave}
+              onStatusChange={handleStatusChange}
+              statuses={statuses}
+              customFields={customFields}
+            />
 
             <TimeTrackingSection
               issueId={issueId}

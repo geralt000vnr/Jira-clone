@@ -8,6 +8,7 @@ const { FORWARD_LABEL, INVERSE_LABEL } = require('../models/IssueLink');
 const ApiError = require('../utils/ApiError');
 const { logActivity } = require('../services/activityLogger');
 const { notifyIssueUpdate } = require('../services/notificationService');
+const { runAutomations } = require('../services/automationEngine');
 
 // POST /api/issues
 exports.createIssue = async (req, res, next) => {
@@ -58,7 +59,15 @@ exports.createIssue = async (req, res, next) => {
 
     if (assigneeId) notifyIssueUpdate({ issue, event: 'assigned', actorId: req.user.id });
 
-    res.status(201).json({ success: true, issue });
+    const finalIssue = await runAutomations({
+      trigger: 'issue_created',
+      issue,
+      organizationId: req.user.organizationId,
+      projectId,
+      actorId: req.user.id,
+    });
+
+    res.status(201).json({ success: true, issue: finalIssue });
   } catch (err) {
     await session.abortTransaction();
     next(err);
@@ -183,10 +192,12 @@ exports.updateIssue = async (req, res, next) => {
       'priority',
       'assigneeId',
       'dueDate',
+      'startDate',
       'labels',
       'sprintId',
       'storyPoints',
       'originalEstimateSeconds',
+      'customFieldValues',
     ];
     const updates = {};
     for (const key of allowed) if (key in fields) updates[key] = fields[key];
@@ -223,7 +234,19 @@ exports.updateIssue = async (req, res, next) => {
     }
 
     notifyIssueUpdate({ issue, event: 'updated', actorId: req.user.id });
-    res.json({ success: true, issue });
+
+    let finalIssue = issue;
+    if ('assigneeId' in updates && String(before.assigneeId) !== String(updates.assigneeId)) {
+      finalIssue = await runAutomations({
+        trigger: 'issue_assigned',
+        issue,
+        organizationId: req.user.organizationId,
+        projectId: issue.projectId,
+        actorId: req.user.id,
+      });
+    }
+
+    res.json({ success: true, issue: finalIssue });
   } catch (err) {
     next(err);
   }
@@ -271,7 +294,15 @@ exports.moveIssue = async (req, res, next) => {
 
     notifyIssueUpdate({ issue, event: 'status_changed', actorId: req.user.id });
 
-    res.json({ success: true, issue });
+    const finalIssue = await runAutomations({
+      trigger: 'issue_status_changed',
+      issue,
+      organizationId: req.user.organizationId,
+      projectId: issue.projectId,
+      actorId: req.user.id,
+    });
+
+    res.json({ success: true, issue: finalIssue });
   } catch (err) {
     next(err);
   }
