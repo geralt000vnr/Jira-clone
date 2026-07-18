@@ -11,6 +11,7 @@ const attachmentRoutes = require('./routes/attachmentRoutes'); // mounts /issues
 const worklogRoutes = require('./routes/worklogRoutes'); // mounts /issues/:id/worklogs and /worklogs/:id
 const savedFilterRoutes = require('./routes/savedFilterRoutes'); // mounts /projects/:projectId/saved-filters and /saved-filters/:id
 const userRoutes = require('./routes/userRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 app.use(cors());
@@ -27,6 +28,7 @@ app.use('/api', attachmentRoutes); // same for attachments
 app.use('/api', worklogRoutes); // same for worklogs
 app.use('/api', savedFilterRoutes); // same for saved filters
 app.use('/api/users', userRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.use(errorHandler);
 

@@ -12,4 +12,5 @@ exports.updateWorkflowStatusSchema = z.object({
   category: z.enum(CATEGORIES).optional(),
   color: z.enum(COLORS).optional(),
   order: z.number().int().min(0).optional(),
+  allowedTransitions: z.array(z.string()).optional(),
 });

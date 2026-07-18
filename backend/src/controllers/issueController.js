@@ -260,6 +260,19 @@ exports.moveIssue = async (req, res, next) => {
     const { id } = req.params;
     const { toStatusId, toPosition, expectedVersion, fromStatusId } = req.body;
 
+    // Enforce workflow transitions: the DB's actual current status is the source of
+    // truth (not the client-supplied fromStatusId, which is only used below for the
+    // audit-trail label). An empty allowedTransitions list means unrestricted.
+    const current = await Issue.findOne(req.scope({ _id: id })).select('statusId');
+    if (!current) throw new ApiError(404, 'Issue not found');
+    if (String(current.statusId) !== String(toStatusId)) {
+      const fromStatusDoc = await WorkflowStatus.findById(current.statusId).select('allowedTransitions');
+      if (fromStatusDoc?.allowedTransitions?.length > 0) {
+        const allowed = fromStatusDoc.allowedTransitions.some((s) => String(s) === String(toStatusId));
+        if (!allowed) throw new ApiError(400, 'This status transition is not allowed by the project workflow');
+      }
+    }
+
     // Optimistic locking: only succeeds if version still matches what the client last saw.
     const issue = await Issue.findOneAndUpdate(
       req.scope({ _id: id, version: expectedVersion }),
@@ -272,8 +285,8 @@ exports.moveIssue = async (req, res, next) => {
 
     if (!issue) {
       // Either not found, or someone else moved it first — client should refetch and retry.
-      const current = await Issue.findOne(req.scope({ _id: id }));
-      if (!current) throw new ApiError(404, 'Issue not found');
+      const stillExists = await Issue.findOne(req.scope({ _id: id }));
+      if (!stillExists) throw new ApiError(404, 'Issue not found');
       throw new ApiError(409, 'Issue was modified by someone else. Please refresh and try again.');
     }
 

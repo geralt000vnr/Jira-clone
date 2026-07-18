@@ -45,6 +45,12 @@ export default function IssueForm({ issue, onSave, onStatusChange, statuses = []
     saveCustomField(field._id, value);
   };
 
+  const currentStatus = statuses.find((s) => s._id === issue.statusId);
+  const allowedStatuses =
+    !currentStatus?.allowedTransitions?.length
+      ? statuses
+      : statuses.filter((s) => s._id === issue.statusId || currentStatus.allowedTransitions.includes(s._id));
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -77,7 +83,7 @@ export default function IssueForm({ issue, onSave, onStatusChange, statuses = []
           {/* Status changes go through the move endpoint, not the general update endpoint
               (the backend's updateIssue only accepts title/description/priority/assigneeId/dueDate/startDate/labels/sprintId/storyPoints/originalEstimateSeconds/customFieldValues) */}
           <select value={issue.statusId} onChange={(e) => onStatusChange(e.target.value)} className={selectClass}>
-            {statuses.map((s) => (
+            {allowedStatuses.map((s) => (
               <option key={s._id} value={s._id}>
                 {s.name}
               </option>

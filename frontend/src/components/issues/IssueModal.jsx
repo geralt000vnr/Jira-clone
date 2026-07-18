@@ -9,6 +9,7 @@ import IssueForm from './IssueForm';
 import { cn, fieldClass, getInitials } from '../../lib/utils';
 import { useToast } from '../../context/ToastContext';
 import { useConfirm } from '../../context/ConfirmContext';
+import { addRecentlyViewed } from '../../lib/recentlyViewed';
 
 function formatDuration(seconds) {
   if (!seconds) return '0h';
@@ -47,6 +48,7 @@ export default function IssueModal({ issueId, onClose, statuses = [], customFiel
         worklogApi.list(issueId),
       ]);
       setIssue(issueRes.issue);
+      addRecentlyViewed(issueRes.issue);
       setSubtasks(issueRes.subtasks);
       setLinks(issueRes.links || []);
       setComments(commentsRes);
@@ -99,6 +101,8 @@ export default function IssueModal({ issueId, onClose, statuses = [], customFiel
       if (err.response?.status === 409) {
         showToast('This issue changed elsewhere. Reloading the latest version.');
         loadAll();
+      } else if (err.response?.status === 400) {
+        showToast(err.response?.data?.message || 'This status transition is not allowed.');
       } else {
         setError('Failed to change status');
       }

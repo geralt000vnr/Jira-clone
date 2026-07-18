@@ -64,6 +64,13 @@ export default function WorkflowSettings({ projectId }) {
     load();
   };
 
+  const handleToggleTransition = async (status, targetId) => {
+    const current = status.allowedTransitions || [];
+    const next = current.includes(targetId) ? current.filter((id) => id !== targetId) : [...current, targetId];
+    await workflowStatusApi.update(projectId, status._id, { allowedTransitions: next });
+    load();
+  };
+
   const sorted = [...statuses].sort((a, b) => a.order - b.order);
 
   return (
@@ -75,35 +82,56 @@ export default function WorkflowSettings({ projectId }) {
 
       <ul className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl mb-4 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
         {sorted.map((s, i) => (
-          <li key={s._id} className="flex items-center justify-between p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
-            <div className="flex items-center gap-3">
-              <span className={cn('size-2.5 rounded-full', STATUS_DOT_CLASS[s.color] || STATUS_DOT_CLASS.slate)} />
-              <div>
-                <div className="font-medium text-slate-800 dark:text-slate-200">{s.name}</div>
-                <div className="text-slate-400 dark:text-slate-500 text-xs capitalize">{s.category.replace('_', ' ')} category</div>
+          <li key={s._id} className="p-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className={cn('size-2.5 rounded-full', STATUS_DOT_CLASS[s.color] || STATUS_DOT_CLASS.slate)} />
+                <div>
+                  <div className="font-medium text-slate-800 dark:text-slate-200">{s.name}</div>
+                  <div className="text-slate-400 dark:text-slate-500 text-xs capitalize">{s.category.replace('_', ' ')} category</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleReorder(s, -1)}
+                  disabled={i === 0}
+                  className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronUp className="size-4" />
+                </button>
+                <button
+                  onClick={() => handleReorder(s, 1)}
+                  disabled={i === sorted.length - 1}
+                  className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronDown className="size-4" />
+                </button>
+                <button
+                  onClick={() => handleRemove(s._id)}
+                  className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors duration-150 ml-1"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleReorder(s, -1)}
-                disabled={i === 0}
-                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
-              >
-                <ChevronUp className="size-4" />
-              </button>
-              <button
-                onClick={() => handleReorder(s, 1)}
-                disabled={i === sorted.length - 1}
-                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
-              >
-                <ChevronDown className="size-4" />
-              </button>
-              <button
-                onClick={() => handleRemove(s._id)}
-                className="text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors duration-150 ml-1"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 pl-5 text-xs">
+              <span className="text-slate-400 dark:text-slate-500 shrink-0">Can move to:</span>
+              {sorted
+                .filter((t) => t._id !== s._id)
+                .map((t) => (
+                  <label key={t._id} className="flex items-center gap-1 cursor-pointer text-slate-600 dark:text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={(s.allowedTransitions || []).includes(t._id)}
+                      onChange={() => handleToggleTransition(s, t._id)}
+                      className="cursor-pointer"
+                    />
+                    {t.name}
+                  </label>
+                ))}
+              {(!s.allowedTransitions || s.allowedTransitions.length === 0) && (
+                <span className="text-slate-400 dark:text-slate-500 italic">(any status)</span>
+              )}
             </div>
           </li>
         ))}

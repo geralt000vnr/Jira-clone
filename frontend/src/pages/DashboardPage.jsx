@@ -1,6 +1,7 @@
 import { LogOut, KanbanSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ProjectList from '../components/projects/ProjectList';
+import Dashboard from '../components/dashboard/Dashboard';
 import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { getInitials } from '../lib/utils';
 
@@ -34,6 +35,7 @@ export default function DashboardPage() {
         </div>
       </header>
       <main className="p-6 max-w-6xl mx-auto">
+        <Dashboard />
         <ProjectList />
       </main>
     </div>

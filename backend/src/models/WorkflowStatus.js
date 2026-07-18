@@ -11,6 +11,9 @@ const workflowStatusSchema = new mongoose.Schema(
     category: { type: String, enum: CATEGORIES, required: true },
     order: { type: Number, default: 0 },
     color: { type: String, enum: COLORS, default: 'slate' },
+    // Statuses this one may move to. Empty = unrestricted (any status allowed) —
+    // preserves existing behavior until an admin opts into restricting transitions.
+    allowedTransitions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'WorkflowStatus' }],
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }

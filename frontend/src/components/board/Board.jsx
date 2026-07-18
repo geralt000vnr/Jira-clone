@@ -66,6 +66,8 @@ export default function Board({ projectId, filters = {}, onIssueClick, members =
     } catch (err) {
       if (err.response?.status === 409) {
         showToast('This issue was updated by someone else. Refreshing the board.');
+      } else if (err.response?.status === 400) {
+        showToast(err.response?.data?.message || 'This move is not allowed.');
       }
       loadIssues(); // reconcile with server truth on any failure
     }
